@@ -6,7 +6,7 @@ import tigris
 if __name__ == "__main__":
     bank = tigris.TigrisBank()
     while True:
-        cmd = int(input("1) new_account ; 2) send ; 3) balance"))
+        cmd = int(input("1) new_account ; 2) send ; 3) balance, ; 4) all_balance\n"))
 
         if cmd == 1:
             user_id = input("user_id: ")
@@ -23,5 +23,7 @@ if __name__ == "__main__":
         elif cmd == 3:
             user_id = input("user_id: ")
             print(bank.get_balance(user_id))
+        elif cmd == 4:
+            bank.get_all_balance()
         print()
 

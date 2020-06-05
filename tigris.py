@@ -13,6 +13,14 @@ class TigrisBank():
         else:
             log_error("Error opening DB")
 
+    def get_all_balance(self):
+        query_fetch = "SELECT * FROM {}".format(BALANCE_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch)
+        balance = cur.fetchall()
+        for b in balance:
+            log_info(b)
+
     def get_balance(self, user_id=None):
         query_fetch = "SELECT * FROM {} WHERE user_id = ?".format(BALANCE_TABLE)
         cur = self.db.cursor()
