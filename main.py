@@ -97,7 +97,7 @@ def send(message):
         return res
 
     try:
-        amount = float(msg_cont[2])
+        amount = round(float(msg_cont[2]), 3)
     except Exception as e:
         res = "Erreur : Mauvais format du montant de la transaction : {}".format(msg_cont[2])
         log_error(res)
@@ -110,6 +110,11 @@ def send(message):
         log_info(res)
         return res
 
+    if to_id == from_id:
+        res = "Erreur : L'expéditeur et le même que le destinataire."
+        log_info(res)
+        return res
+
     msg = ''
     if len(msg_cont) > 3:
         msg = ' '.join(msg_cont[3:])[:256]
@@ -119,7 +124,9 @@ def send(message):
 
     # Branch on return status
     if status == 0:
-        res = "L'opération est enregistrée."
+        res = "L'opération est enregistrée.\n"
+        if to_id == TIGRISBOT_ID:
+            res += "Fais un voeu."
     elif status == 1:
         res = "Erreur : L'expéditeur n'a pas de compte en banque."
     elif status == 2:
