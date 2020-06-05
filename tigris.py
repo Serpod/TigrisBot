@@ -9,7 +9,7 @@ class TigrisBank():
     def __init__(self, db_name=DB_NAME):
         self.db = db.connect_db(db_name)
         if self.db is not None:
-            log_info("DB succesfully loaded")
+            log_info("DB {} succesfully loaded".format(db_name))
         else:
             log_error("Error opening DB")
 

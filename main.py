@@ -147,7 +147,7 @@ async def on_message(message):
 
 
     if DEBUG and message.content.startswith("."):
-        log_info(message.content)
+        log_info("{} ({}): {}".format(message.author.name, message.author.id, message.content))
     #    await message.channel.send("```{}```".format(message.content))
 
     if message.content.startswith(".new_account"):

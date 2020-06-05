@@ -1,5 +1,8 @@
+import datetime
 def log_info(msg):
-    print(">>> {}".format(msg))
+    date = datetime.datetime.now()
+    print("{} >>> {}".format(date, msg))
 
 def log_error(msg):
-    print("*** {}".format(msg))
+    date = datetime.datetime.now()
+    print("{} *** {}".format(date, msg))
