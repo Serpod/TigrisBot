@@ -146,9 +146,9 @@ def get_history(message):
     res += "Votre historique :\n\n"
     for t in transacs:
         if t[0] == user_id:
-            res += "{}\t | <@{}>\t\t | {}ŧ | {}".format(t[4], t[1], ('-' + str(t[2])).rjust(10), t[3])
+            res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[1], ('-' + str(t[2])).rjust(10), t[3])
         elif t[1] == user_id:
-            res += "{}\t | <@{}>\t\t | {}ŧ | {}".format(t[4], t[0], ('+' + str(t[2]).rjust(10)), t[3])
+            res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[0], ('+' + str(t[2])).rjust(10), t[3])
     log_info(res)
     return res
 
