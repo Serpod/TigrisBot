@@ -13,7 +13,7 @@ bank = tigris.TigrisBank()
 
 def usage():
     usage = ''
-    usage += "Service de gestion de la monnaie de Fibreville : le tigris.\n"
+    usage += "Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n"
     usage += "Commandes disponibles :\n"
     usage += "\t.new_account [user]\n"
     usage += "\t\tCrée un compte en banque pour l'utilisateur renseigné (s'il y en a un) ou pour l'expéditeur du message.\n"
