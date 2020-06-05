@@ -73,7 +73,7 @@ class TigrisBank():
         cur.execute(query_update, (balanceTo + amount, to_id))
 
         # Add transaction
-        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment) VALUES(?, ?, ?, ?)".format(TRANSACTION_TABLE).format(TRANSACTION_TABLE)
+        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now'))".format(TRANSACTION_TABLE).format(TRANSACTION_TABLE)
         cur = self.db.cursor()
         cur.execute(query_transac, (from_id, to_id, amount, message))
 
@@ -81,3 +81,8 @@ class TigrisBank():
 
         return 0
 
+    def get_history(self, user_id):
+        query_fetch = "SELECT * FROM {} WHERE to_id = ? or from_id = ?".format(TRANSACTION_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (user_id, user_id))
+        return cur.fetchall()

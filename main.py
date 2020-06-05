@@ -23,6 +23,8 @@ def usage():
     usage += "\t.send <to> <amount> [message]\n"
     usage += "\t\tSi vous avez les fonds nécéssaires, envoie <amount> tigris à l'utilisateur <to>.\n"
     usage += "\t\tUn message (facultatif) peut être renseigné.\n"
+    usage += "\t.history\n"
+    usage += "\t\tVous transmet par message privé votre historique de transactions.\n"
     usage += "\t.help\n"
     usage += "\t\tAffiche ce message.\n"
 
@@ -63,7 +65,7 @@ def get_balance(message):
     user_id = message.author.id
     balance = bank.get_balance(user_id)
     if balance >= 0:
-        res = "Vous avez {} tigris en banque.".format(balance)
+        res = "Vous avez {}ŧ (tigris) en banque.".format(balance)
     else:
         res = "Erreur : Vous n'avez pas de compte en banque.\n"
         res += "Vous pouvez en créer un avec la commande `.new_account`."
@@ -137,6 +139,19 @@ def send(message):
     log_info(res)
     return res
     
+def get_history(message):
+    user_id = message.author.id
+    transacs = bank.get_history(user_id)
+    res = ''
+    res += "Votre historique :\n\n"
+    for t in transacs:
+        if t[0] == user_id:
+            res += "{}\t | <@{}>\t\t | {}ŧ | {}".format(t[4], t[1], ('-' + str(t[2])).rjust(10), t[3])
+        elif t[1] == user_id:
+            res += "{}\t | <@{}>\t\t | {}ŧ | {}".format(t[4], t[0], ('+' + str(t[2]).rjust(10)), t[3])
+    log_info(res)
+    return res
+
 
 @client.event
 async def on_ready():
@@ -185,6 +200,11 @@ async def on_message(message):
             log_error("An error occured in help function")
             log_error(e)
             traceback.print_exc()
+
+    elif message.content.startswith(".history"):
+        res = get_history(message)
+        dm = await message.author.create_dm()
+        await dm.send(res)
         
 
 client.run(BOT_TOKEN)
