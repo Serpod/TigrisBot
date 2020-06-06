@@ -13,20 +13,24 @@ bank = tigris.TigrisBank()
 
 def usage():
     usage = ''
-    usage += "Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n"
-    usage += "Commandes disponibles :\n"
+    usage += "Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
+    usage += "Commandes disponibles pour tous et toutes :\n"
     usage += "\t.new_account [user]\n"
-    usage += "\t\tCrée un compte en banque pour l'utilisateur renseigné (s'il y en a un) ou pour l'expéditeur du message.\n"
+    usage += "\t\tCrée un compte en banque pour l'utilisateur.rice renseigné.e (s'il y a lieu) ou pour l'expéditeur.ice du message.\n"
     usage += "\t\t(Ne fonctionne que si le compte n'existe pas déjà.)\n"
     usage += "\t.balance\n"
     usage += "\t\tVous transmet par message privé votre solde.\n"
     usage += "\t.send <to> <amount> [message]\n"
-    usage += "\t\tSi vous avez les fonds nécéssaires, envoie <amount> tigris à l'utilisateur <to>.\n"
+    usage += "\t\tSi vous avez les fonds nécéssaires, envoie <amount> tigris à l'utilisateur.ice <to>.\n"
     usage += "\t\tUn message (facultatif) peut être renseigné.\n"
     usage += "\t.history\n"
     usage += "\t\tVous transmet par message privé votre historique de transactions.\n"
     usage += "\t.help\n"
     usage += "\t\tAffiche ce message.\n"
+    usage += "\n"
+    usage += "Commande spéciale (nécéssite le statut de gestionnaire des finances) :\n"
+    usage += "\t.all_balance\n"
+    usage += "\t\tVous transmet par message privé l'état de tous les comptes en banque.\n"
 
     return usage
 
