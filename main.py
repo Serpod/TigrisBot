@@ -165,7 +165,7 @@ async def get_history(message):
     log_info(res)
     return res
 
-async def get_all_balance(message):
+async def get_all_balance():
     all_balance = bank.get_all_balance()
     res = "Comptes en banque :\n\n"
     for user_id, balance in all_balance:
@@ -239,10 +239,11 @@ async def on_message(message):
         await dm.send(res)
 
     # ADMIN only functions
-    elif message.content.startswith(".all_balance") and message.author.id in ADMIN:
-        res = await get_all_balance(message)
-        dm = await message.author.create_dm()
-        await dm.send(res)
+    if message.author.id in ADMIN:
+        if message.content.startswith(".all_balance"):
+            res = await get_all_balance()
+            dm = await message.author.create_dm()
+            await dm.send(res)
 
         
 
