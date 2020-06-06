@@ -13,6 +13,7 @@ def init_db(filename):
     queries = []
     queries.append("CREATE TABLE {} (user_id INTEGER, balance REAL)".format(BALANCE_TABLE))
     queries.append("CREATE TABLE {} (from_id INTEGER, to_id INTEGER, amount INTEGER, comment TEXT, date TXT)".format(TRANSACTION_TABLE))
+    queries.append("CREATE TABLE {} (user_id INTEGER, job_id INTEGER, title TEXT, salary REAL)".format(JOB_TABLE))
     queries.append("CREATE TABLE {} (user_id INTEGER, name TEXT)".format(NAME_TABLE))
     for q in queries:
         conn.execute(q)
