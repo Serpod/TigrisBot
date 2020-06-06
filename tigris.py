@@ -20,6 +20,7 @@ class TigrisBank():
         balance = cur.fetchall()
         for b in balance:
             log_info(b)
+        return balance
 
     def get_balance(self, user_id=None):
         query_fetch = "SELECT * FROM {} WHERE user_id = ?".format(BALANCE_TABLE)

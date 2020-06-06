@@ -160,6 +160,15 @@ async def get_history(message):
     log_info(res)
     return res
 
+async def get_all_balance(message):
+    all_balance = bank.get_all_balance()
+    res = "Comptes en banque :\n\n"
+    for user_id, balance in all_balance:
+        username = (await client.fetch_user(user_id)).name
+        res += "`{}|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
+    log_info(res)
+    return res
+
 
 @client.event
 async def on_ready():
@@ -213,6 +222,13 @@ async def on_message(message):
         res = await get_history(message)
         dm = await message.author.create_dm()
         await dm.send(res)
+
+    # ADMIN only functions
+    elif message.content.startswith(".all_balance") and message.author.id in ADMIN:
+        res = await get_all_balance(message)
+        dm = await message.author.create_dm()
+        await dm.send(res)
+
         
 
 client.run(BOT_TOKEN)
