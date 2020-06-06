@@ -168,9 +168,13 @@ def get_history(message):
 def get_all_balance(message):
     all_balance = bank.get_all_balance()
     res = "Comptes en banque :\n\n"
+    tot = 0
     for user_id, balance in all_balance:
+        tot += balance
         username = bank.get_name(user_id)
         res += "`{}|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
+
+    res += "`{}|{}ŧ`\n".format("Total".center(30), str(tot).rjust(10))
     log_info(res)
     return res
 
