@@ -13,6 +13,16 @@ class TigrisBank():
         else:
             log_error("Error opening DB")
 
+    def get_name(self, user_id):
+        query_fetch = "SELECT name FROM {} WHERE user_id = ?".format(NAME_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (user_id, ))
+        name = cur.fetchone()
+        if name is None:
+            log_error("(get_name) Unknown user_id {}".format(user_id))
+            return None
+        return name[0]
+
     def get_all_balance(self):
         query_fetch = "SELECT * FROM {} ORDER BY balance DESC".format(BALANCE_TABLE)
         cur = self.db.cursor()
@@ -33,7 +43,7 @@ class TigrisBank():
 
         return balance[1]
 
-    def new_account(self, user_id, balance=0.):   
+    def new_account(self, user_id, name, balance=0.):
         if self.get_balance(user_id) >= 0:
             log_error("(new_account) user_id {} already in database".format(user_id))
             return False
@@ -42,7 +52,13 @@ class TigrisBank():
         cur = self.db.cursor()
         cur.execute(query_insert, (user_id, balance))
         self.db.commit()
-        
+
+        # Set name
+        query_insert = "INSERT INTO {}(user_id, name) VALUES(?,?)".format(NAME_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_insert, (user_id, name))
+        self.db.commit()
+
         return True
 
 

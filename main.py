@@ -35,7 +35,7 @@ def usage():
     return usage
 
 
-def new_account(message):
+async def new_account(message):
     """
     Create an account for a new account
     """
@@ -57,7 +57,8 @@ def new_account(message):
         log_error("({})".format(e))
         return res
 
-    if bank.new_account(user_id):
+    username = (await client.fetch_user(user_id)).name
+    if bank.new_account(user_id, username):
         res = "<@{}> a maintenant un compte en banque.".format(user_id)
     else:
         res = "Erreur : <@{}> a déjà un compte en banque.".format(user_id)
@@ -143,7 +144,7 @@ def send(message):
     log_info(res)
     return res
 
-async def get_history(message):
+def get_history(message):
     user_id = message.author.id
     transacs = bank.get_history(user_id)
     if transacs is None:
@@ -154,21 +155,21 @@ async def get_history(message):
         for t in transacs:
             amount = ("{}" + str(t[2])).rjust(10)
             if t[0] == user_id:
-                username = (await client.fetch_user(t[1])).name
+                username = bank.get_name(t[1])
                 #mention = utils.format_username(t[1], username, 20, True)
                 res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('-'), t[3])
             elif t[1] == user_id:
-                username = (await client.fetch_user(t[0])).name
+                username = bank.get_name(t[0])
                 #mention = utils.format_username(t[0], username, 20, True)
                 res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('+'), t[3])
     log_info(res)
     return res
 
-async def get_all_balance(message):
+def get_all_balance(message):
     all_balance = bank.get_all_balance()
     res = "Comptes en banque :\n\n"
     for user_id, balance in all_balance:
-        username = (await client.fetch_user(user_id)).name
+        username = bank.get_name(user_id)
         res += "`{}|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
     log_info(res)
     return res
@@ -195,7 +196,7 @@ async def on_message(message):
 
     if message.content.startswith(".new_account"):
         try:
-            await message.channel.send("{}".format(new_account(message)))
+            await message.channel.send("{}".format(await new_account(message)))
         except Exception as e:
             log_error("An error occured in new_account function")
             log_error(e)
@@ -223,13 +224,13 @@ async def on_message(message):
             traceback.print_exc()
 
     elif message.content.startswith(".history"):
-        res = await get_history(message)
+        res = get_history(message)
         dm = await message.author.create_dm()
         await dm.send(res)
 
     # ADMIN only functions
     elif message.content.startswith(".all_balance") and message.author.id in ADMIN:
-        res = await get_all_balance(message)
+        res = get_all_balance(message)
         dm = await message.author.create_dm()
         await dm.send(res)
 
