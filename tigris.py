@@ -14,7 +14,7 @@ class TigrisBank():
             log_error("Error opening DB")
 
     def get_all_balance(self):
-        query_fetch = "SELECT * FROM {}".format(BALANCE_TABLE)
+        query_fetch = "SELECT * FROM {} ORDER BY balance DESC".format(BALANCE_TABLE)
         cur = self.db.cursor()
         cur.execute(query_fetch)
         balance = cur.fetchall()
