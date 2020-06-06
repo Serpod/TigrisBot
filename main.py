@@ -138,8 +138,8 @@ def send(message):
 
     log_info(res)
     return res
-    
-def get_history(message):
+
+async def get_history(message):
     user_id = message.author.id
     transacs = bank.get_history(user_id)
     if transacs is None:
@@ -148,10 +148,15 @@ def get_history(message):
         res = ''
         res += "Votre historique :\n\n"
         for t in transacs:
+            amount = ("{}" + str(t[2])).rjust(10)
             if t[0] == user_id:
-                res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[1], ('-' + str(t[2])).rjust(10), t[3])
+                username = (await client.fetch_user(t[1])).name
+                #mention = utils.format_username(t[1], username, 20, True)
+                res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('-'), t[3])
             elif t[1] == user_id:
-                res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[0], ('+' + str(t[2])).rjust(10), t[3])
+                username = (await client.fetch_user(t[0])).name
+                #mention = utils.format_username(t[0], username, 20, True)
+                res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('+'), t[3])
     log_info(res)
     return res
 
@@ -205,7 +210,7 @@ async def on_message(message):
             traceback.print_exc()
 
     elif message.content.startswith(".history"):
-        res = get_history(message)
+        res = await get_history(message)
         dm = await message.author.create_dm()
         await dm.send(res)
         
