@@ -13,24 +13,43 @@ bank = tigris.TigrisBank()
 
 def usage():
     usage = ''
-    usage += "Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
-    usage += "Commandes disponibles pour tous et toutes :\n"
-    usage += "\t.new_account [user]\n"
+    usage += "# Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
+    usage += "## Commandes disponibles pour tous et toutes :\n"
+    usage += "\t* .new_account [<user>]\n"
     usage += "\t\tCrée un compte en banque pour l'utilisateur.rice renseigné.e (s'il y a lieu) ou pour l'expéditeur.ice du message.\n"
     usage += "\t\t(Ne fonctionne que si le compte n'existe pas déjà.)\n"
-    usage += "\t.balance\n"
+    usage += '\n'
+    usage += "\t* .balance\n"
     usage += "\t\tVous transmet par message privé votre solde.\n"
-    usage += "\t.send <to> <amount> [message]\n"
+    usage += '\n'
+    usage += "\t* .send <to> <amount> [<message>]\n"
     usage += "\t\tSi vous avez les fonds nécéssaires, envoie <amount> tigris à l'utilisateur.ice <to>.\n"
-    usage += "\t\tUn message (facultatif) peut être renseigné.\n"
-    usage += "\t.history\n"
+    usage += "\t\tUn message (facultatif) <message> peut être renseigné.\n"
+    usage += '\n'
+    usage += "\t* .history\n"
     usage += "\t\tVous transmet par message privé votre historique de transactions.\n"
-    usage += "\t.help\n"
+    usage += '\n'
+    usage += "\t* .all_jobs\n"
+    usage += "\t\tAffiche tous les métiers des citoyens du royaume.\n"
+    usage += '\n'
+    usage += "\t* .help\n"
     usage += "\t\tAffiche ce message.\n"
+    usage += '\n'
     usage += "\n"
-    usage += "Commande spéciale (nécéssite le statut de gestionnaire des finances) :\n"
-    usage += "\t.all_balance\n"
+    usage += "## Commande spéciale (nécéssite le statut de gestionnaire des finances) :\n"
+    usage += "\t* .all_balance\n"
     usage += "\t\tVous transmet par message privé l'état de tous les comptes en banque.\n"
+    usage += '\n'
+    usage += "\t* .all_jobs [classic]\n"
+    usage += "\t\tTransmet, en privé, tous les métiers des citoyens du royaume, avec le salaire associé.\n"
+    usage += "\t\tSi classic est renseigné, équivalent à la commande disponibles pour tout le monde.\n"
+    usage += '\n'
+    usage += "\t* .new_job <user> <salary> <title>\n"
+    usage += "\t\tAjoute un nouveau métier à <user>. Il devient <title> et est payé <salary>.\n"
+    usage += '\n'
+    usage += "\t* .del_job <user> <job_id>\n"
+    usage += "\t\tSupprime le métier <job_id> de <user>.\n"
+    usage += '\n'
 
     return usage
 
@@ -336,7 +355,7 @@ async def on_message(message):
 
     elif message.content.startswith(".help"):
         try:
-            await message.channel.send("```\n{}```".format(usage()))
+            await message.channel.send("```markdown\n{}```".format(usage()))
         except Exception as e:
             log_error("An error occured in help function")
             log_error(e)
