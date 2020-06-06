@@ -216,6 +216,11 @@ def new_job(message):
     .new_job <user_id> <salary> <title>
     """
     msg = message.content.split()
+    if len(msg) < 4:
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.new_job <user_id> <salary> <title>`"
+        return res
+
     user_id = utils.get_user_id(msg[1])
     if user_id is None:
         res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
@@ -243,6 +248,11 @@ def del_job(message):
     .del_job <user_id> <job_id>
     """
     msg = message.content.split()
+    if len(msg) < 3:
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.del_job <user_id> <job_id>`"
+        return res
+
     user_id = utils.get_user_id(msg[1])
     if user_id is None:
         res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
