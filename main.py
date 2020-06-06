@@ -41,20 +41,13 @@ async def new_account(message):
     """
     msg = message.content.split()
     if len(msg) == 2:
-        match = utils.pattern_id.match(msg[1])
-        if match is not None:
-            user_id = match.group(1)
-        else:
-            user_id = None
+        user_id = utils.get_user_id(msg[1])
     else:
         user_id = message.author.id
 
-    try:
-        user_id = int(user_id)
-    except Exception as e:
+    if user_id is None:
         res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
         log_error(res)
-        log_error("({})".format(e))
         return res
 
     username = await get_name(user_id)
@@ -88,19 +81,10 @@ def send(message):
         res += "`.send <to> <amount> [message]`"
         return res
 
-    match = utils.pattern_id.match(msg_cont[1])
-    if match is not None:
-        to_id = match.group(1)
-    else:
-        to_id = None
-
-    try:
-        to_id = int(to_id)
-    except Exception as e:
+    to_id = utils.get_user_id(msg_cont[1])
+    if to_id is None:
         res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg_cont[1])
         log_error(res)
-        log_error("({})".format(e))
-        traceback.print_exc()
         return res
 
     try:
