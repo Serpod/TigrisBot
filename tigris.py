@@ -23,6 +23,15 @@ class TigrisBank():
             return None
         return name[0]
 
+
+    def set_name(self, user_id, name):
+        # Set name
+        query_insert = "INSERT INTO {}(user_id, name) VALUES(?,?)".format(NAME_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_insert, (user_id, name))
+        self.db.commit()
+
+
     def get_all_balance(self):
         query_fetch = "SELECT * FROM {} ORDER BY balance DESC".format(BALANCE_TABLE)
         cur = self.db.cursor()
@@ -97,6 +106,7 @@ class TigrisBank():
         self.db.commit()
 
         return 0
+
 
     def get_history(self, user_id):
         balance = self.get_balance(user_id)
