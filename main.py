@@ -29,6 +29,9 @@ def usage():
     usage += "\t* .history\n"
     usage += "\t\tVous transmet par message privé votre historique de transactions.\n"
     usage += '\n'
+    usage += "\t* .jobs [<user>]\n"
+    usage += "\t\tVous transmet votre métier ou affiche le métier de <user>.\n"
+    usage += '\n'
     usage += "\t* .all_jobs\n"
     usage += "\t\tAffiche tous les métiers des citoyens du royaume.\n"
     usage += '\n'
@@ -277,6 +280,32 @@ def del_job(message):
     return res
 
 
+def get_jobs(message, is_other=False):
+    if is_other:
+        m = message.content.split()[1]
+        user_id = utils.get_user_id(m)
+        if user_id is None:
+            res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(m)
+            log_error(res)
+            return res
+    else:
+        user_id = message.author.id
+
+    jobs = bank.get_jobs(user_id)
+
+    res = "Le ou les métiers de {} :\n".format(utils.mention(user_id))
+    res += "```\n"
+    for _, job_id, title, salary in jobs:
+        res += "* {}".format(title.center(70))
+        if not is_other:
+            res += "| {}ŧ | {}".format(str(salary).rjust(10), job_id)
+        res += '\n'
+    res += "```"
+
+    log_info(res)
+    return res
+
+
 async def get_name(user_id):
     name = bank.get_name(user_id)
     if name is None:
@@ -382,10 +411,28 @@ async def on_message(message):
         await dm.send(res)
 
     elif message.content.startswith(".jobs"):
-        """
-        The jobs of any user (salary displayed only if asked for the jobs of the message sender)
-        """
-        None
+        msg = message.content.split()
+        if len(msg) == 1:
+            res = get_jobs(message, is_other=False)
+            dm = await message.author.create_dm()
+            await dm.send(res)
+        elif len(msg) == 2:
+            try:
+                await message.channel.send(get_jobs(message, is_other=True))
+            except Exception as e:
+                log_error("An error occured in jobs function")
+                log_error(e)
+                traceback.print_exc()
+        else:
+            res = "Erreur : Mauvais nombre de paramètres.\n"
+            res += ".jobs [<user>]"
+            log_err(res)
+            try:
+                await message.channel.send(res)
+            except Exception as e:
+                log_error("An error occured in jobs function")
+                log_error(e)
+                traceback.print_exc()
 
     elif message.author.id not in ADMIN and message.content.startswith(".all_jobs"):
         try:
