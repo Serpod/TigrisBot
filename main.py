@@ -174,6 +174,7 @@ def get_all_balance(message):
         username = bank.get_name(user_id)
         res += "`{}|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
 
+    res += '`' + '-'*42 + "`\n"
     res += "`{}|{}ŧ`\n".format("Total".center(30), str(tot).rjust(10))
     log_info(res)
     return res
