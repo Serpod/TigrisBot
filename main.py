@@ -156,11 +156,9 @@ async def get_history(message):
             amount = ("{}" + str(t[2])).rjust(10)
             if t[0] == user_id:
                 username = await get_name(t[1])
-                #mention = utils.format_username(t[1], username, 20, True)
                 res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('-'), t[3])
             elif t[1] == user_id:
                 username = await get_name(t[0])
-                #mention = utils.format_username(t[0], username, 20, True)
                 res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('+'), t[3])
     log_info(res)
     return res
