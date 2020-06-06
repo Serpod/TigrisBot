@@ -155,6 +155,94 @@ async def get_all_balance():
     log_info(res)
     return res
 
+def get_all_jobs(is_admin=False):
+    """
+    The jobs of everyone (with salaries).
+    """
+    all_jobs = bank.get_all_jobs()
+    res = "Métiers :\n\n"
+    jobs = []
+    curr_uid = 0
+    for user_id, job_id, title, salary in all_jobs:
+        print("toto")
+        if user_id != curr_uid:
+            if curr_uid != 0:
+                curr_job += "```"
+                jobs.append(curr_job)
+            curr_job = ""
+            curr_uid = user_id
+            curr_job += "Le ou les métiers de {} :\n".format(utils.mention(curr_uid))
+            curr_job += "```markdown\n"
+        curr_job += "* {}".format(title.center(70))
+        if is_admin:
+            curr_job += "| {}ŧ | {}".format(str(salary).rjust(10), job_id)
+        curr_job += '\n'
+
+    if len(all_jobs) > 0:
+        curr_job += "```"
+        jobs.append(curr_job)
+
+    log_info(jobs)
+    return jobs
+
+def new_job(message):
+    """
+    Add a new job with:
+
+    .new_job <user_id> <salary> <title>
+    """
+    msg = message.content.split()
+    user_id = utils.get_user_id(msg[1])
+    if user_id is None:
+        res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
+        log_error(res)
+        return res
+
+    try:
+        salary = int(msg[2])
+    except:
+        res = "Erreur : Mauvais format du salaire (chiffres décimaux uniquement) : {}".format(msg[2])
+        log_error(res)
+        return res
+
+    title = ' '.join(msg[3:])[:256]
+
+    bank.new_job(user_id, salary, title)
+    res = "Nouveau métier pour {} enregistré !".format(utils.mention(user_id))
+    log_info(res)
+    return res
+
+def del_job(message):
+    """
+    Remove a given job for a given user with:
+
+    .del_job <user_id> <job_id>
+    """
+    msg = message.content.split()
+    user_id = utils.get_user_id(msg[1])
+    if user_id is None:
+        res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
+        log_error(res)
+        return res
+
+    try:
+        job_id = int(msg[2])
+    except:
+        res = "Erreur : Mauvais format de l'identifiant de métier (chiffres décimaux uniquement) : {}".format(msg[2])
+        log_error(res)
+        return res
+
+    job = bank.remove_job(user_id, job_id)
+    if job is None:
+        res = "Erreur : Le métier pour le citoyen ({}) ayant pour identifiant {} n'existe pas".format(utils.mention(user_id), job_id)
+        log_error(res)
+        return res
+
+    res = "{} n'est plus {}.".format(utils.mention(user_id), job[2])
+    log_info(res)
+    return res
+
+
 async def get_name(user_id):
     name = bank.get_name(user_id)
     if name is None:
@@ -189,6 +277,42 @@ async def on_message(message):
         log_info("{} ({}): {}".format(message.author.name, message.author.id, message.content))
     #    await message.channel.send("```{}```".format(message.content))
 
+    # ADMIN only functions
+    if message.author.id in ADMIN:
+        if message.content.startswith(".all_balance"):
+            res = await get_all_balance()
+            dm = await message.author.create_dm()
+            await dm.send(res)
+
+        if message.content.startswith(".all_jobs"):
+            msg = message.content.split()
+            if len(msg) == 2 and msg[1] == "classic":
+                jobs = get_all_jobs()
+                for job in jobs:
+                    await message.channel.send(job)
+            else:
+                jobs = get_all_jobs(True)
+                dm = await message.author.create_dm()
+                for job in jobs:
+                    await dm.send(job)
+
+        elif message.content.startswith(".new_job"):
+            try:
+                await message.channel.send("{}".format(new_job(message)))
+            except Exception as e:
+                log_error("An error occured in new_job function")
+                log_error(e)
+                traceback.print_exc()
+
+        elif message.content.startswith(".del_job"):
+            try:
+                await message.channel.send("{}".format(del_job(message)))
+            except Exception as e:
+                log_error("An error occured in del_job function")
+                log_error(e)
+                traceback.print_exc()
+
+    # Functions for every one
     if message.content.startswith(".new_account"):
         try:
             await message.channel.send("{}".format(new_account(message)))
@@ -223,12 +347,21 @@ async def on_message(message):
         dm = await message.author.create_dm()
         await dm.send(res)
 
-    # ADMIN only functions
-    if message.author.id in ADMIN:
-        if message.content.startswith(".all_balance"):
-            res = await get_all_balance()
-            dm = await message.author.create_dm()
-            await dm.send(res)
+    elif message.content.startswith(".jobs"):
+        """
+        The jobs of any user (salary displayed only if asked for the jobs of the message sender)
+        """
+        None
+
+    elif message.author.id not in ADMIN and message.content.startswith(".all_jobs"):
+        try:
+            jobs = get_all_jobs()
+            for job in jobs:
+                await message.channel.send(job)
+        except Exception as e:
+            log_error("An error occured in all_jobs function")
+            log_error(e)
+            traceback.print_exc()
 
         
 
