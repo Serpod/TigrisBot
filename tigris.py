@@ -118,3 +118,119 @@ class TigrisBank():
         cur = self.db.cursor()
         cur.execute(query_fetch, (user_id, user_id))
         return cur.fetchall()
+
+
+    def new_job(self, user_id, salary, title):
+        # Someone can have a job without an account. One will be created at pay time.
+
+        # Compute new job_id
+        query_max_job_id = "SELECT MAX(job_id) FROM {} WHERE user_id = ?".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_max_job_id, (user_id,))
+        max_job_id = cur.fetchone()
+        if max_job_id is None:
+            # First job
+            job_id = 0
+        else:
+            job_id = max_job_id + 1
+
+        # Insert new job
+        query_new_job = "INSERT INTO {}(user_id, job_id, title, salary) VALUES(?, ?, ?, ?)"
+        cur = self.db.cursor()
+        cur.execute(query_new_job, (user_id, job_id, title, salary))
+        self.db.commit()
+
+        return 0
+
+
+    def remove_job(self, user_id, job_id):
+        query_fetch = "SELECT * FROM {} WHERE user_id = ? AND job_id = ?".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (user_id, job_id))
+        job = cur.fetchone()
+        if job is None:
+            log_error("(remove_job) The job ({}) for user_id {} doesn't exist".format(job_id, user_id))
+            return 1
+
+        query_delete = "DELETE FROM {} WHERE user_id = ? AND job_id = ?".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (user_id, job_id))
+        self.db.commit()
+
+        return 0
+
+
+    def get_jobs(self, user_id):
+        query_fetch = "SELECT * FROM {} WHERE user_id = ? ORDER BY job_id ASC".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (user_id, ))
+        jobs = cur.fetchall()
+
+        return jobs
+
+
+    def get_all_jobs(self):
+        query_fetch = "SELECT * FROM {} ORDER BY  job_id ASC, user_id".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch)
+        jobs = cur.fetchall()
+
+        return jobs
+
+
+    def get_salary(self, user_id):
+        query_fetch = "SELECT SUM(salary) FROM {} WHERE user_id = ?".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (user_id,))
+        salary = cur.fetchone()
+        if salary is None:
+            log_error("(get_salary) The user_id {} has no job".format(user_id))
+            return None
+
+        return salary[0]
+
+
+    def get_all_salaries(self):
+        query_fetch = "SELECT user_id, SUM(salary) FROM {} GROUP BY user_id".format(JOB_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch)
+        salaries = cur.fetchall()
+
+        return salaries
+
+
+    def pay_salary(self, from_id, to_id, salary=None):
+        # Create account if necessary
+        if salary is None:
+            # Fetch salary
+            salary = self.get_salary(to_id)
+
+        if salary == 0:
+            log_info("(pay_salary) 0 salary for to_id {}".format(to_id))
+            return 1
+
+        if self.get_balance(to_id) < 0:
+            # Create account
+            self.new_account(to_id, "")
+
+        from_b = self.get_balance(from_id)
+        if from_b < 0:
+            log_error("(pay_salary) from_id {} doesn't exists".format(from_id))
+            return 2
+
+        if from_b < salary:
+            log_error("(pay_salary) from_id {} hasn't got sufficient funds".format(from_id))
+            return 3
+
+
+        # Finally, pay salary
+        return self.send(from_id, to_id, salary, "Salary")
+
+
+    def pay_all_salary(self, from_id):
+        salaries = self.get_all_salaries()
+        ret_values = []
+        for user_id, salary in salaries:
+            ret_values.append(self.pay_salary(from_id, user_id, salary))
+
+        return ret_values
