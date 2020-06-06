@@ -73,7 +73,7 @@ class TigrisBank():
         cur.execute(query_update, (balanceTo + amount, to_id))
 
         # Add transaction
-        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now'))".format(TRANSACTION_TABLE).format(TRANSACTION_TABLE)
+        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'))".format(TRANSACTION_TABLE).format(TRANSACTION_TABLE)
         cur = self.db.cursor()
         cur.execute(query_transac, (from_id, to_id, amount, message))
 
