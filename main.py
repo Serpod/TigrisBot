@@ -142,13 +142,16 @@ def send(message):
 def get_history(message):
     user_id = message.author.id
     transacs = bank.get_history(user_id)
-    res = ''
-    res += "Votre historique :\n\n"
-    for t in transacs:
-        if t[0] == user_id:
-            res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[1], ('-' + str(t[2])).rjust(10), t[3])
-        elif t[1] == user_id:
-            res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[0], ('+' + str(t[2])).rjust(10), t[3])
+    if transacs is None:
+        res = "Erreur : vous n'avez pas de compte en banque."
+    else:
+        res = ''
+        res += "Votre historique :\n\n"
+        for t in transacs:
+            if t[0] == user_id:
+                res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[1], ('-' + str(t[2])).rjust(10), t[3])
+            elif t[1] == user_id:
+                res += "{}\t | <@{}>\t\t | {}ŧ | {}\n".format(t[4], t[0], ('+' + str(t[2])).rjust(10), t[3])
     log_info(res)
     return res
 

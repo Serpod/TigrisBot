@@ -82,6 +82,11 @@ class TigrisBank():
         return 0
 
     def get_history(self, user_id):
+        balance = self.get_balance(user_id)
+        if balance < 0:
+            log_error("(get_history) user_id {} doesn't exist".format(user_id))
+            return None
+
         query_fetch = "SELECT * FROM {} WHERE to_id = ? or from_id = ?".format(TRANSACTION_TABLE)
         cur = self.db.cursor()
         cur.execute(query_fetch, (user_id, user_id))
