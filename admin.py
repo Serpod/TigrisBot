@@ -10,8 +10,9 @@ if __name__ == "__main__":
 
         if cmd == 1:
             user_id = input("user_id: ")
+            name = input("name: ")
             balance = input("balance: ")
-            bank.new_account(user_id, balance)
+            bank.new_account(user_id, name, balance)
         elif cmd == 2:
             from_id = input("from_id: ")
             #from_id = 260861701279318019

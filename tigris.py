@@ -52,7 +52,7 @@ class TigrisBank():
 
         return balance[1]
 
-    def new_account(self, user_id, name, balance=0.):
+    def new_account(self, user_id, balance=0.):
         if self.get_balance(user_id) >= 0:
             log_error("(new_account) user_id {} already in database".format(user_id))
             return False
@@ -60,12 +60,6 @@ class TigrisBank():
         query_insert = "INSERT INTO {}(user_id, balance) VALUES(?,?)".format(BALANCE_TABLE)
         cur = self.db.cursor()
         cur.execute(query_insert, (user_id, balance))
-        self.db.commit()
-
-        # Set name
-        query_insert = "INSERT INTO {}(user_id, name) VALUES(?,?)".format(NAME_TABLE)
-        cur = self.db.cursor()
-        cur.execute(query_insert, (user_id, name))
         self.db.commit()
 
         return True

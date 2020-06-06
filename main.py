@@ -35,7 +35,7 @@ def usage():
     return usage
 
 
-async def new_account(message):
+def new_account(message):
     """
     Create an account for a new account
     """
@@ -50,8 +50,7 @@ async def new_account(message):
         log_error(res)
         return res
 
-    username = await get_name(user_id)
-    if bank.new_account(user_id, username):
+    if bank.new_account(user_id):
         res = "<@{}> a maintenant un compte en banque.".format(user_id)
     else:
         res = "Erreur : <@{}> a déjà un compte en banque.".format(user_id)
@@ -157,13 +156,18 @@ async def get_all_balance():
     return res
 
 async def get_name(user_id):
-    name = bank.get_name()
-    if not name:
+    name = bank.get_name(user_id)
+    if name is None:
         name = await set_name(user_id)
     return name
 
 async def set_name(user_id):
-    name = (await client.fetch_user(user_id)).name
+    try:
+        name = (await client.fetch_user(user_id)).name
+    except Exception as e:
+        log_error(e)
+        traceback.print_exc()
+        return "<USERNAME_UNKNOWN>"
     bank.set_name(user_id, name)
     return name
 
@@ -181,14 +185,13 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-
     if DEBUG and message.content.startswith("."):
         log_info("{} ({}): {}".format(message.author.name, message.author.id, message.content))
     #    await message.channel.send("```{}```".format(message.content))
 
     if message.content.startswith(".new_account"):
         try:
-            await message.channel.send("{}".format(await new_account(message)))
+            await message.channel.send("{}".format(new_account(message)))
         except Exception as e:
             log_error("An error occured in new_account function")
             log_error(e)
