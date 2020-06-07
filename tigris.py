@@ -77,6 +77,12 @@ class TigrisBank():
             log_error("(send) insufficiant funds from {}".format(from_id))
             return 3
 
+        # Tax
+        if to_id != TAX_TARGET and from_id != TAX_TARGET:
+            tax = round(amount * 0.1, 3)
+            amount -= tax
+            self.send(from_id, TAX_TARGET, tax, message="Tax")
+
         # Update balance
         query_update = "UPDATE {} SET balance = ? WHERE user_id = ?".format(BALANCE_TABLE)
         cur = self.db.cursor()
@@ -93,7 +99,7 @@ class TigrisBank():
         cur.execute(query_update, (balanceTo + amount, to_id))
 
         # Add transaction
-        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'))".format(TRANSACTION_TABLE).format(TRANSACTION_TABLE)
+        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'))".format(TRANSACTION_TABLE)
         cur = self.db.cursor()
         cur.execute(query_transac, (from_id, to_id, amount, message))
 
