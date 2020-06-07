@@ -67,7 +67,7 @@ class TigrisBank():
 
     def send(self, from_id, to_id, amount, message=''):
         # Verify from_id exists in db
-        balanceFrom= self.get_balance(from_id)
+        balanceFrom = self.get_balance(from_id)
         if balanceFrom < 0:
             log_error("(send) user_id {} doesn't exist".format(from_id))
             return 1
@@ -82,6 +82,7 @@ class TigrisBank():
             tax = round(amount * 0.1, 3)
             amount -= tax
             self.send(from_id, TAX_TARGET, tax, message="Tax")
+            balanceFrom = self.get_balance(from_id)
 
         # Update balance
         query_update = "UPDATE {} SET balance = ? WHERE user_id = ?".format(BALANCE_TABLE)
