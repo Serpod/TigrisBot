@@ -59,6 +59,9 @@ def usage():
     usage += "\t* .salary [<user>]\n"
     usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
     usage += '\n'
+    usage += "\t* .all_salaries\n"
+    usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
+    usage += '\n'
 
     return usage
 
@@ -211,6 +214,21 @@ async def get_all_jobs(is_admin=False):
 
     log_info(jobs)
     return jobs
+
+async def get_all_salaries():
+    all_salaries = bank.get_all_salaries()
+    res = "Salaires en banque :\n\n"
+    tot = 0
+    for user_id, salary in all_salaries:
+        tot += salary
+        username = await get_name(user_id)
+        res += "`{}|{}ŧ`\n".format(username.center(30), str(salary).rjust(10))
+
+    res += '`' + '-'*42 + "`\n"
+    res += "`{}|{}ŧ`\n".format("Total".center(30), str(tot).rjust(10))
+    log_info(res)
+    return res
+
 
 def new_job(message):
     """
@@ -415,6 +433,11 @@ async def on_message(message):
 
         elif message.content.startswith(".salary"):
             res = get_salary(message)
+            dm = await message.author.create_dm()
+            await dm.send(res)
+
+        elif message.content.startswith(".all_salaries"):
+            res = await get_all_salaries()
             dm = await message.author.create_dm()
             await dm.send(res)
 

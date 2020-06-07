@@ -195,7 +195,7 @@ class TigrisBank():
 
 
     def get_all_salaries(self):
-        query_fetch = "SELECT user_id, SUM(salary) FROM {} GROUP BY user_id".format(JOB_TABLE)
+        query_fetch = "SELECT user_id, SUM(salary) FROM {} GROUP BY user_id ORDER BY SUM(salary) DESC".format(JOB_TABLE)
         cur = self.db.cursor()
         cur.execute(query_fetch)
         salaries = cur.fetchall()
