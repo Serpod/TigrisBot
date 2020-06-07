@@ -35,6 +35,9 @@ def usage():
     usage += "\t* .all_jobs\n"
     usage += "\t\tAffiche tous les métiers des citoyens du royaume.\n"
     usage += '\n'
+    usage += "\t* .salary\n"
+    usage += "\t\tAffiche votre salaire.\n"
+    usage += '\n'
     usage += "\t* .help\n"
     usage += "\t\tAffiche ce message.\n"
     usage += '\n'
@@ -52,6 +55,16 @@ def usage():
     usage += '\n'
     usage += "\t* .del_job <user> <job_id>\n"
     usage += "\t\tSupprime le métier <job_id> de <user>.\n"
+    usage += '\n'
+    usage += "\t* .salary [<user>]\n"
+    usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
+    usage += '\n'
+    usage += "\t* .all_salaries\n"
+    usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
+    usage += '\n'
+    usage += "\t* .pay_salaries\n"
+    usage += "\t\tDéclenche la paye des salaires à tous les citoyens.\n"
+    usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
     usage += '\n'
 
     return usage
@@ -211,6 +224,21 @@ async def get_all_jobs(is_admin=False):
     log_info(jobs)
     return jobs
 
+async def get_all_salaries():
+    all_salaries = bank.get_all_salaries()
+    res = "Salaires en banque :\n\n"
+    tot = 0
+    for user_id, salary in all_salaries:
+        tot += salary
+        username = await get_name(user_id)
+        res += "`{}|{}ŧ`\n".format(username.center(30), str(salary).rjust(10))
+
+    res += '`' + '-'*42 + "`\n"
+    res += "`{}|{}ŧ`\n".format("Total".center(30), str(tot).rjust(10))
+    log_info(res)
+    return res
+
+
 def new_job(message):
     """
     Add a new job with:
@@ -279,7 +307,7 @@ def del_job(message):
     return res
 
 
-def get_jobs(message, is_other=False):
+async def get_jobs(message, is_other=False):
     if is_other:
         m = message.content.split()[1]
         user_id = utils.get_user_id(m)
@@ -292,7 +320,7 @@ def get_jobs(message, is_other=False):
 
     jobs = bank.get_jobs(user_id)
 
-    res = "Le ou les métiers de {} :\n".format(utils.mention(user_id))
+    res = "Le ou les métiers de **{}** :\n".format(await get_name(user_id))
     res += "```\n"
     for _, job_id, title, salary in jobs:
         res += "* {}".format(title.center(70))
@@ -304,6 +332,71 @@ def get_jobs(message, is_other=False):
     log_info(res)
     return res
 
+
+def get_salary(message):
+    m = message.content.split()
+    if message.author.id in ADMIN and len(m) == 2:
+        user_id = utils.get_user_id(m[1])
+        if user_id is None:
+            res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(m[1])
+            log_error(res)
+            return res
+    elif len(m) == 1:
+        user_id = message.author.id
+    else:
+        res = "Erreur : Mauvais nombre de paramètre.\n"
+        res += ".salary (classique)\n"
+        res += ".salary [<user>] (privilégié)"
+        log_error(res)
+        return res
+
+    salary = bank.get_salary(user_id)
+    if len(m) == 2:
+        if salary is None:
+            res = "Erreur : {} n'a aucun de métier.".format(utils.mention(user_id))
+            log_error(res)
+            return res
+        else:
+            res = "{} a un salaire mensuel de {} pour l'ensemble de ses métiers.".format(utils.mention(user_id), salary)
+            log_info(res)
+            return res
+    else:
+        if salary is None:
+            res = "Erreur : vous n'avez pas de métier."
+            log_error(res)
+            return res
+        else:
+            res = "Vous avez un salaire mensuel de {}ŧ pour l'ensemble de vos métiers.".format(salary)
+            log_info(res)
+            return res
+
+
+def pay_salaries(message):
+    from_id = message.author.id
+
+    ret_values = bank.pay_all_salaries(from_id)
+
+    res = ""
+    paid = []
+    error = []
+    for user_id, v, salary in ret_values:
+        if v == 1:
+            res = "Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id))
+            log_error(res)
+            return res, paid, error
+
+        if v == 0:
+            res += "Son salaire a été versé à {}.\n".format(utils.mention(user_id))
+            paid.append((user_id, salary))
+        elif v == 2:
+            error.append((user_id, "Erreur : La salaire de {} est nul.".format(utils.mention(user_id))))
+        elif v == 3:
+            error.append((user_id, "Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(user_id))))
+            res += error[-1][1]
+            log_error(res)
+            return res, paid, error
+
+    return res, paid, error
 
 async def get_name(user_id):
     name = bank.get_name(user_id)
@@ -374,7 +467,31 @@ async def on_message(message):
                 log_error(e)
                 traceback.print_exc()
 
-    # Functions for every one
+        elif message.content.startswith(".salary"):
+            res = get_salary(message)
+            dm = await message.author.create_dm()
+            await dm.send(res)
+
+        elif message.content.startswith(".all_salaries"):
+            res = await get_all_salaries()
+            dm = await message.author.create_dm()
+            await dm.send(res)
+
+        elif message.content.startswith(".pay_salaries"):
+            res, paid, error = pay_salaries(message)
+            for user_id, amount in paid:
+                user = await client.fetch_user(user_id)
+                dm = await user.create_dm()
+                await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount))
+            try:
+                await message.channel.send(res)
+            except Exception as e:
+                log_error("An error occured in pay_salaries function")
+                log_error(e)
+                traceback.print_exc()
+
+
+    # Functions for everyone
     if message.content.startswith(".new_account"):
         try:
             await message.channel.send("{}".format(new_account(message)))
@@ -412,12 +529,12 @@ async def on_message(message):
     elif message.content.startswith(".jobs"):
         msg = message.content.split()
         if len(msg) == 1:
-            res = get_jobs(message, is_other=False)
+            res = await get_jobs(message, is_other=False)
             dm = await message.author.create_dm()
             await dm.send(res)
         elif len(msg) == 2:
             try:
-                await message.channel.send(get_jobs(message, is_other=True))
+                await message.channel.send(await get_jobs(message, is_other=True))
             except Exception as e:
                 log_error("An error occured in jobs function")
                 log_error(e)
@@ -425,7 +542,7 @@ async def on_message(message):
         else:
             res = "Erreur : Mauvais nombre de paramètres.\n"
             res += ".jobs [<user>]"
-            log_err(res)
+            log_error(res)
             try:
                 await message.channel.send(res)
             except Exception as e:
@@ -443,7 +560,12 @@ async def on_message(message):
             log_error(e)
             traceback.print_exc()
 
-        
+    elif message.author.id not in ADMIN and message.content.startswith(".salary"):
+        try:
+            await message.channel.send(get_salary(message))
+        except Exception as e:
+            log_error("An error occured in help function")
+            log_error(e)
+            traceback.print_exc()
 
 client.run(BOT_TOKEN)
-

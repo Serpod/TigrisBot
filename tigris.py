@@ -191,11 +191,11 @@ class TigrisBank():
             log_error("(get_salary) The user_id {} has no job".format(user_id))
             return None
 
-        return salary[0]
+        return salary
 
 
     def get_all_salaries(self):
-        query_fetch = "SELECT user_id, SUM(salary) FROM {} GROUP BY user_id".format(JOB_TABLE)
+        query_fetch = "SELECT user_id, SUM(salary) FROM {} GROUP BY user_id ORDER BY SUM(salary) DESC".format(JOB_TABLE)
         cur = self.db.cursor()
         cur.execute(query_fetch)
         salaries = cur.fetchall()
@@ -211,7 +211,7 @@ class TigrisBank():
 
         if salary == 0:
             log_info("(pay_salary) 0 salary for to_id {}".format(to_id))
-            return 1
+            return 2
 
         if self.get_balance(to_id) < 0:
             # Create account
@@ -220,7 +220,7 @@ class TigrisBank():
         from_b = self.get_balance(from_id)
         if from_b < 0:
             log_error("(pay_salary) from_id {} doesn't exists".format(from_id))
-            return 2
+            return 1
 
         if from_b < salary:
             log_error("(pay_salary) from_id {} hasn't got sufficient funds".format(from_id))
@@ -231,10 +231,10 @@ class TigrisBank():
         return self.send(from_id, to_id, salary, "Salary")
 
 
-    def pay_all_salary(self, from_id):
+    def pay_all_salaries(self, from_id):
         salaries = self.get_all_salaries()
         ret_values = []
         for user_id, salary in salaries:
-            ret_values.append(self.pay_salary(from_id, user_id, salary))
+            ret_values.append((user_id, self.pay_salary(from_id, user_id, salary), salary))
 
         return ret_values
