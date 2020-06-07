@@ -35,6 +35,9 @@ def usage():
     usage += "\t* .all_jobs\n"
     usage += "\t\tAffiche tous les métiers des citoyens du royaume.\n"
     usage += '\n'
+    usage += "\t* .salary\n"
+    usage += "\t\tAffiche votre salaire.\n"
+    usage += '\n'
     usage += "\t* .help\n"
     usage += "\t\tAffiche ce message.\n"
     usage += '\n'
@@ -52,6 +55,9 @@ def usage():
     usage += '\n'
     usage += "\t* .del_job <user> <job_id>\n"
     usage += "\t\tSupprime le métier <job_id> de <user>.\n"
+    usage += '\n'
+    usage += "\t* .salary [<user>]\n"
+    usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
     usage += '\n'
 
     return usage
@@ -300,6 +306,44 @@ async def get_jobs(message, is_other=False):
     return res
 
 
+def get_salary(message):
+    m = message.content.split()
+    if message.author.id in ADMIN and len(m) == 2:
+        user_id = utils.get_user_id(m[1])
+        if user_id is None:
+            res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(m[1])
+            log_error(res)
+            return res
+    elif len(m) == 1:
+        user_id = message.author.id
+    else:
+        res = "Erreur : Mauvais nombre de paramètre.\n"
+        res += ".salary (classique)\n"
+        res += ".salary [<user>] (privilégié)"
+        log_error(res)
+        return res
+
+    salary = bank.get_salary(user_id)
+    if len(m) == 2:
+        if salary is None:
+            res = "Erreur : {} n'a aucun de métier.".format(utils.mention(user_id))
+            log_error(res)
+            return res
+        else:
+            res = "{} a un salaire mensuel de {} pour l'ensemble de ses métiers.".format(utils.mention(user_id), salary)
+            log_info(res)
+            return res
+    else:
+        if salary is None:
+            res = "Erreur : vous n'avez pas de métier."
+            log_error(res)
+            return res
+        else:
+            res = "Vous avez un salaire mensuel de {}ŧ pour l'ensemble de vos métiers.".format(salary)
+            log_info(res)
+            return res
+
+
 async def get_name(user_id):
     name = bank.get_name(user_id)
     if name is None:
@@ -369,7 +413,12 @@ async def on_message(message):
                 log_error(e)
                 traceback.print_exc()
 
-    # Functions for every one
+        elif message.content.startswith(".salary"):
+            res = get_salary(message)
+            dm = await message.author.create_dm()
+            await dm.send(res)
+
+    # Functions for everyone
     if message.content.startswith(".new_account"):
         try:
             await message.channel.send("{}".format(new_account(message)))
@@ -438,7 +487,12 @@ async def on_message(message):
             log_error(e)
             traceback.print_exc()
 
-        
+    elif message.author.id not in ADMIN and message.content.startswith(".salary"):
+        try:
+            await message.channel.send(get_salary(message))
+        except Exception as e:
+            log_error("An error occured in help function")
+            log_error(e)
+            traceback.print_exc()
 
 client.run(BOT_TOKEN)
-

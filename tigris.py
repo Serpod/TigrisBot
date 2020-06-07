@@ -191,7 +191,7 @@ class TigrisBank():
             log_error("(get_salary) The user_id {} has no job".format(user_id))
             return None
 
-        return salary[0]
+        return salary
 
 
     def get_all_salaries(self):
