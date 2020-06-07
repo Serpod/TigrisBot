@@ -186,7 +186,6 @@ def get_all_jobs(is_admin=False):
     jobs = []
     curr_uid = 0
     for user_id, job_id, title, salary in all_jobs:
-        print("toto")
         if user_id != curr_uid:
             if curr_uid != 0:
                 curr_job += "```"
