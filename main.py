@@ -177,7 +177,7 @@ async def get_all_balance():
     log_info(res)
     return res
 
-def get_all_jobs(is_admin=False):
+async def get_all_jobs(is_admin=False):
     """
     The jobs of everyone (with salaries).
     """
@@ -192,7 +192,7 @@ def get_all_jobs(is_admin=False):
                 jobs.append(curr_job)
             curr_job = ""
             curr_uid = user_id
-            curr_job += "Le ou les métiers de {} :\n".format(utils.mention(curr_uid))
+            curr_job += "Le ou les métiers de **{}** :\n".format(await get_name(curr_uid))
             curr_job += "```markdown\n"
         curr_job += "* {}".format(title.center(70))
         if is_admin:
@@ -334,11 +334,11 @@ async def on_message(message):
         if message.content.startswith(".all_jobs"):
             msg = message.content.split()
             if len(msg) == 2 and msg[1] == "classic":
-                jobs = get_all_jobs()
+                jobs = await get_all_jobs()
                 for job in jobs:
                     await message.channel.send(job)
             else:
-                jobs = get_all_jobs(True)
+                jobs = await get_all_jobs(True)
                 dm = await message.author.create_dm()
                 for job in jobs:
                     await dm.send(job)
@@ -420,7 +420,7 @@ async def on_message(message):
 
     elif message.author.id not in ADMIN and message.content.startswith(".all_jobs"):
         try:
-            jobs = get_all_jobs()
+            jobs = await get_all_jobs()
             for job in jobs:
                 await message.channel.send(job)
         except Exception as e:
