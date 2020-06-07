@@ -161,10 +161,10 @@ async def get_history(message):
             amount = ("{}" + str(t[2])).rjust(10)
             if t[0] == user_id:
                 username = await get_name(t[1])
-                res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('-'), t[3])
+                res += "`{}\t|**{}**|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('-'), t[3])
             elif t[1] == user_id:
                 username = await get_name(t[0])
-                res += "`{}\t|{}|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('+'), t[3])
+                res += "`{}\t|**{}**|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('+'), t[3])
     log_info(res)
     return res
 
@@ -173,7 +173,7 @@ async def get_all_balance():
     res = "Comptes en banque :\n\n"
     for user_id, balance in all_balance:
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
+        res += "`**{}**|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
     log_info(res)
     return res
 
