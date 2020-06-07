@@ -213,6 +213,11 @@ def new_job(message):
     .new_job <user_id> <salary> <title>
     """
     msg = message.content.split()
+    if len(msg) < 4:
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.new_job <user_id> <salary> <title>`"
+        return res
+
     user_id = utils.get_user_id(msg[1])
     if user_id is None:
         res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
@@ -240,6 +245,11 @@ def del_job(message):
     .del_job <user_id> <job_id>
     """
     msg = message.content.split()
+    if len(msg) < 3:
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.del_job <user_id> <job_id>`"
+        return res
+
     user_id = utils.get_user_id(msg[1])
     if user_id is None:
         res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
@@ -264,7 +274,7 @@ def del_job(message):
     return res
 
 
-def get_jobs(message, is_other=False):
+async def get_jobs(message, is_other=False):
     if is_other:
         m = message.content.split()[1]
         user_id = utils.get_user_id(m)
@@ -277,7 +287,7 @@ def get_jobs(message, is_other=False):
 
     jobs = bank.get_jobs(user_id)
 
-    res = "Le ou les métiers de {} :\n".format(utils.mention(user_id))
+    res = "Le ou les métiers de **{}** :\n".format(await get_name(user_id))
     res += "```\n"
     for _, job_id, title, salary in jobs:
         res += "* {}".format(title.center(70))
@@ -397,12 +407,12 @@ async def on_message(message):
     elif message.content.startswith(".jobs"):
         msg = message.content.split()
         if len(msg) == 1:
-            res = get_jobs(message, is_other=False)
+            res = await get_jobs(message, is_other=False)
             dm = await message.author.create_dm()
             await dm.send(res)
         elif len(msg) == 2:
             try:
-                await message.channel.send(get_jobs(message, is_other=True))
+                await message.channel.send(await get_jobs(message, is_other=True))
             except Exception as e:
                 log_error("An error occured in jobs function")
                 log_error(e)
