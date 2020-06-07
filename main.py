@@ -226,7 +226,7 @@ async def get_all_jobs(is_admin=False):
 
 async def get_all_salaries():
     all_salaries = bank.get_all_salaries()
-    res = "Salaires en banque :\n\n"
+    res = "Salaires des citoyens :\n\n"
     tot = 0
     for user_id, salary in all_salaries:
         tot += salary
