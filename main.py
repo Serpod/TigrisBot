@@ -420,7 +420,7 @@ async def on_message(message):
         else:
             res = "Erreur : Mauvais nombre de paramètres.\n"
             res += ".jobs [<user>]"
-            log_err(res)
+            log_error(res)
             try:
                 await message.channel.send(res)
             except Exception as e:
