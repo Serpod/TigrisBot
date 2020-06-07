@@ -62,6 +62,10 @@ def usage():
     usage += "\t* .all_salaries\n"
     usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
     usage += '\n'
+    usage += "\t* .pay_salaries\n"
+    usage += "\t\tDéclenche la paye des salaires à tous les citoyens.\n"
+    usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
+    usage += '\n'
 
     return usage
 
@@ -362,6 +366,33 @@ def get_salary(message):
             return res
 
 
+def pay_salaries(message):
+    from_id = message.author.id
+
+    ret_values = bank.pay_all_salaries(from_id)
+
+    res = ""
+    paid = []
+    error = []
+    for user_id, v, salary in ret_values:
+        if v == 1:
+            res = "Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id))
+            log_error(res)
+            return res, paid, error
+
+        if v == 0:
+            res += "Son salaire a été versé à {}.\n".format(utils.mention(user_id))
+            paid.append((user_id, salary))
+        elif v == 2:
+            error.append((user_id, "Erreur : La salaire de {} est nul.".format(utils.mention(user_id))))
+        elif v == 3:
+            error.append((user_id, "Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(user_id))))
+            res += error[-1][1]
+            log_error(res)
+            return res, paid, error
+
+    return res, paid, error
+
 async def get_name(user_id):
     name = bank.get_name(user_id)
     if name is None:
@@ -440,6 +471,20 @@ async def on_message(message):
             res = await get_all_salaries()
             dm = await message.author.create_dm()
             await dm.send(res)
+
+        elif message.content.startswith(".pay_salaries"):
+            res, paid, error = pay_salaries(message)
+            for user_id, amount in paid:
+                user = await client.fetch_user(user_id)
+                dm = await user.create_dm()
+                await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount))
+            try:
+                await message.channel.send(res)
+            except Exception as e:
+                log_error("An error occured in pay_salaries function")
+                log_error(e)
+                traceback.print_exc()
+
 
     # Functions for everyone
     if message.content.startswith(".new_account"):
