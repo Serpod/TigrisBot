@@ -166,19 +166,20 @@ async def get_history(message):
     user_id = message.author.id
     transacs = bank.get_history(user_id)
     if transacs is None:
-        res = "Erreur : vous n'avez pas de compte en banque."
+        res = ["Erreur : vous n'avez pas de compte en banque."]
     else:
-        res = ''
-        res += "Votre historique :\n\n"
+        res = []
+        res.append("Votre historique :")
+        res.append("")
         for t in transacs:
             amount = ("{}" + str(t[2])).rjust(10)
             if t[0] == user_id:
                 username = await get_name(t[1])
-                res += "`{}\t|**{}**|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('-'), t[3])
+                res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('-'), t[3]))
             elif t[1] == user_id:
                 username = await get_name(t[0])
-                res += "`{}\t|**{}**|{}ŧ | '{}'`\n".format(t[4], username.center(20), amount.format('+'), t[3])
-    log_info(res)
+                res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('+'), t[3]))
+    log_info('\n'.join(res))
     return res
 
 async def get_all_balance():
@@ -188,10 +189,10 @@ async def get_all_balance():
     for user_id, balance in all_balance:
         tot += balance
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.center(30), str(balance).rjust(10))
+        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(balance).rjust(10))
 
     res += '`' + '-'*42 + "`\n"
-    res += "`{}|{}ŧ`\n".format("Total".center(30), str(tot).rjust(10))
+    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot).rjust(10))
     log_info(res)
     return res
 
@@ -231,10 +232,10 @@ async def get_all_salaries():
     for user_id, salary in all_salaries:
         tot += salary
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.center(30), str(salary).rjust(10))
+        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(salary).rjust(10))
 
     res += '`' + '-'*42 + "`\n"
-    res += "`{}|{}ŧ`\n".format("Total".center(30), str(tot).rjust(10))
+    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot).rjust(10))
     log_info(res)
     return res
 
@@ -376,24 +377,24 @@ def pay_salaries(message):
 
     ret_values = bank.pay_all_salaries(from_id)
 
-    res = ""
+    res = []
     paid = []
     error = []
     for user_id, v, salary in ret_values:
         if v == 1:
-            res = "Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id))
-            log_error(res)
+            res.append("Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id)))
+            log_error(res[-1])
             return res, paid, error
 
         if v == 0:
-            res += "Son salaire a été versé à {}.\n".format(utils.mention(user_id))
+            res.append("Son salaire a été versé à {}.\n".format(utils.mention(user_id)))
             paid.append((user_id, salary))
         elif v == 2:
             error.append((user_id, "Erreur : La salaire de {} est nul.".format(utils.mention(user_id))))
         elif v == 3:
             error.append((user_id, "Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(user_id))))
-            res += error[-1][1]
-            log_error(res)
+            res.append(error[-1][1])
+            log_error(res[-1])
             return res, paid, error
 
     return res, paid, error
@@ -437,19 +438,17 @@ async def on_message(message):
         if message.content.startswith(".all_balance"):
             res = await get_all_balance()
             dm = await message.author.create_dm()
-            await dm.send(res)
+            await utils.send_msg(res.split('\n'), dm)
 
         if message.content.startswith(".all_jobs"):
             msg = message.content.split()
             if len(msg) == 2 and msg[1] == "classic":
                 jobs = await get_all_jobs()
-                for job in jobs:
-                    await message.channel.send(job)
+                await utils.send_msg(jobs, message.channel)
             else:
                 jobs = await get_all_jobs(True)
                 dm = await message.author.create_dm()
-                for job in jobs:
-                    await dm.send(job)
+                await utils.send_msg(jobs, dm)
 
         elif message.content.startswith(".new_job"):
             try:
@@ -475,7 +474,7 @@ async def on_message(message):
         elif message.content.startswith(".all_salaries"):
             res = await get_all_salaries()
             dm = await message.author.create_dm()
-            await dm.send(res)
+            await utils.send_msg(res.split('\n'), dm)
 
         elif message.content.startswith(".pay_salaries"):
             res, paid, error = pay_salaries(message)
@@ -484,7 +483,7 @@ async def on_message(message):
                 dm = await user.create_dm()
                 await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount))
             try:
-                await message.channel.send(res)
+                await utils.send_msg(res, message.channel)
             except Exception as e:
                 log_error("An error occured in pay_salaries function")
                 log_error(e)
@@ -524,17 +523,17 @@ async def on_message(message):
     elif message.content.startswith(".history"):
         res = await get_history(message)
         dm = await message.author.create_dm()
-        await dm.send(res)
+        await utils.send_msg(res, dm)
 
     elif message.content.startswith(".jobs"):
         msg = message.content.split()
         if len(msg) == 1:
             res = await get_jobs(message, is_other=False)
             dm = await message.author.create_dm()
-            await dm.send(res)
+            await utils.send_msg(res, dm)
         elif len(msg) == 2:
             try:
-                await message.channel.send(await get_jobs(message, is_other=True))
+                await utils.send_msg(await get_jobs(message, is_other=True), message.channel)
             except Exception as e:
                 log_error("An error occured in jobs function")
                 log_error(e)
@@ -544,7 +543,7 @@ async def on_message(message):
             res += ".jobs [<user>]"
             log_error(res)
             try:
-                await message.channel.send(res)
+                await utils.send_msg(res, message.channel)
             except Exception as e:
                 log_error("An error occured in jobs function")
                 log_error(e)
@@ -553,8 +552,7 @@ async def on_message(message):
     elif message.author.id not in ADMIN and message.content.startswith(".all_jobs"):
         try:
             jobs = await get_all_jobs()
-            for job in jobs:
-                await message.channel.send(job)
+            await utils.send_msg(jobs, message.channel)
         except Exception as e:
             log_error("An error occured in all_jobs function")
             log_error(e)
