@@ -416,11 +416,11 @@ def get_monthly_taxes(message):
 
         month = match.group(1)
         sum_tax = bank.get_monthly_taxes(month)
-        res = "Somme des taxes pour le mois {} : {}ŧ".format(month, sum_tax)
+        res = "Somme des taxes récoltées pour le mois {} : {}ŧ".format(month, sum_tax)
     else:
         # len(msg) == 0:
         sum_tax = bank.get_monthly_taxes()
-        res = "Somme des taxes pour ce mois-ci : {}ŧ".format(sum_tax)
+        res = "Somme des taxes récoltées pour ce mois-ci : {}ŧ".format(sum_tax)
 
 
     if sum_tax is None:
