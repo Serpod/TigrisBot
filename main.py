@@ -2,6 +2,7 @@ import discord
 import traceback
 import tigris
 import utils
+import re
 from log import *
 from settings import *
 
@@ -37,6 +38,9 @@ def usage():
     usage += '\n'
     usage += "\t* .salary\n"
     usage += "\t\tAffiche votre salaire.\n"
+    usage += '\n'
+    usage += "\t* .monthly_taxes [YYYY-MM]\n"
+    usage += "\t\tAffiche la somme des taxes récoltées pour ce mois-ci ou pour le mois renseigné en suivant le format YYYY-MM (par exemple pour Juin 2020 : 2020-06).\n"
     usage += '\n'
     usage += "\t* .help\n"
     usage += "\t\tAffiche ce message.\n"
@@ -331,7 +335,7 @@ async def get_jobs(message, is_other=False):
     res += "```"
 
     log_info(res)
-    return res
+    return res.split('\n')
 
 
 def get_salary(message):
@@ -398,6 +402,33 @@ def pay_salaries(message):
             return res, paid, error
 
     return res, paid, error
+
+
+def get_monthly_taxes(message):
+    msg = message.content.split()
+    if len(msg) > 1:
+        pattern_month = re.compile("(\d\d\d\d-\d\d)")
+        match = pattern_month.match(msg[1])
+        if match is None:
+            res = "Erreur : Mauvais format pour le mois demandé"
+            log_error(res)
+            return res
+
+        month = match.group(1)
+        sum_tax = bank.get_monthly_taxes(month)
+        res = "Somme des taxes pour le mois {} : {}ŧ".format(month, sum_tax)
+    else:
+        # len(msg) == 0:
+        sum_tax = bank.get_monthly_taxes()
+        res = "Somme des taxes pour ce mois-ci : {}ŧ".format(sum_tax)
+
+
+    if sum_tax is None:
+        res = "Aucune taxe n'a été récoltée ce mois-ci."
+
+    log_info(res)
+    return res
+
 
 async def get_name(user_id):
     name = bank.get_name(user_id)
@@ -548,6 +579,15 @@ async def on_message(message):
                 log_error("An error occured in jobs function")
                 log_error(e)
                 traceback.print_exc()
+
+    elif message.content.startswith(".monthly_taxes"):
+        try:
+            res = get_monthly_taxes(message)
+            await message.channel.send(res)
+        except Exception as e:
+            log_error("An error occured in monthly_taxes function")
+            log_error(e)
+            traceback.print_exc()
 
     elif message.author.id not in ADMIN and message.content.startswith(".all_jobs"):
         try:

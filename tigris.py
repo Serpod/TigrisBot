@@ -239,3 +239,17 @@ class TigrisBank():
             ret_values.append((user_id, self.pay_salary(from_id, user_id, salary), salary))
 
         return ret_values
+
+    def get_monthly_taxes(self, month=None):
+        cur = self.db.cursor()
+        query_tax = "SELECT SUM(amount) FROM {} WHERE comment = 'Tax'".format(TRANSACTION_TABLE)
+        if month is None:
+            query_filter = "AND date LIKE strftime('%Y-%m', 'now') || '%'"
+            cur.execute(query_tax + query_filter)
+        else:
+            query_filter = " AND date LIKE ? || '%'"
+            cur.execute(query_tax + query_filter, (month, ))
+        sum_tax = cur.fetchone()[0]
+        if sum_tax is None:
+            log_error("(get_monthly_tax) No tax for the month {}".format(month))
+        return sum_tax
