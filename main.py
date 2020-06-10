@@ -12,7 +12,7 @@ from settings import *
 client = discord.Client()
 bank = tigris.TigrisBank()
 
-def usage():
+def usage(message):
     usage = ''
     usage += "# Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
     usage += "## Commandes disponibles pour tous et toutes :\n"
@@ -46,30 +46,31 @@ def usage():
     usage += "\t\tAffiche ce message.\n"
     usage += '\n'
     usage += "\n"
-    usage += "## Commande spéciale (nécéssite le statut de gestionnaire des finances) :\n"
-    usage += "\t* .all_balance\n"
-    usage += "\t\tVous transmet par message privé l'état de tous les comptes en banque.\n"
-    usage += '\n'
-    usage += "\t* .all_jobs [classic]\n"
-    usage += "\t\tTransmet, en privé, tous les métiers des citoyens du royaume, avec le salaire associé.\n"
-    usage += "\t\tSi classic est renseigné, équivalent à la commande disponibles pour tout le monde.\n"
-    usage += '\n'
-    usage += "\t* .new_job <user> <salary> <title>\n"
-    usage += "\t\tAjoute un nouveau métier à <user>. Il devient <title> et est payé <salary>.\n"
-    usage += '\n'
-    usage += "\t* .del_job <user> <job_id>\n"
-    usage += "\t\tSupprime le métier <job_id> de <user>.\n"
-    usage += '\n'
-    usage += "\t* .salary [<user>]\n"
-    usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
-    usage += '\n'
-    usage += "\t* .all_salaries\n"
-    usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
-    usage += '\n'
-    usage += "\t* .pay_salaries\n"
-    usage += "\t\tDéclenche la paye des salaires à tous les citoyens.\n"
-    usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
-    usage += '\n'
+    if message.author.id in ADMIN:
+        usage += "## Commandes spéciales (pour notre bon Roy et certains privilégiés) :\n"
+        usage += "\t* .all_balance\n"
+        usage += "\t\tVous transmet par message privé l'état de tous les comptes en banque.\n"
+        usage += '\n'
+        usage += "\t* .all_jobs [classic]\n"
+        usage += "\t\tTransmet, en privé, tous les métiers des citoyens du royaume, avec le salaire associé.\n"
+        usage += "\t\tSi classic est renseigné, équivalent à la commande disponibles pour tout le monde.\n"
+        usage += '\n'
+        usage += "\t* .new_job <user> <salary> <title>\n"
+        usage += "\t\tAjoute un nouveau métier à <user>. Il devient <title> et est payé <salary>.\n"
+        usage += '\n'
+        usage += "\t* .del_job <user> <job_id>\n"
+        usage += "\t\tSupprime le métier <job_id> de <user>.\n"
+        usage += '\n'
+        usage += "\t* .salary [<user>]\n"
+        usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
+        usage += '\n'
+        usage += "\t* .all_salaries\n"
+        usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
+        usage += '\n'
+        usage += "\t* .pay_salaries\n"
+        usage += "\t\tDéclenche la paye des salaires à tous les citoyens.\n"
+        usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
+        usage += '\n'
 
     return usage
 
@@ -545,7 +546,7 @@ async def on_message(message):
 
     elif message.content.startswith(".help"):
         try:
-            await message.channel.send("```markdown\n{}```".format(usage()))
+            await message.channel.send("```markdown\n{}```".format(usage(message)))
         except Exception as e:
             log_error("An error occured in help function")
             log_error(e)
