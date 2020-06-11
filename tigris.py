@@ -66,11 +66,18 @@ class TigrisBank():
 
 
     def send(self, from_id, to_id, amount, message=''):
+        assert from_id != to_id
         # Verify from_id exists in db
         balanceFrom = self.get_balance(from_id)
         if balanceFrom < 0:
             log_error("(send) user_id {} doesn't exist".format(from_id))
             return 1
+
+        # Verify to_id exists in db
+        balanceTo = self.get_balance(to_id)
+        if balanceTo < 0:
+            log_error("(send) user_id {} doesn't exist".format(to_id))
+            return 2
 
         # Verify sufficient funds
         if balanceFrom < amount:
@@ -81,23 +88,19 @@ class TigrisBank():
         if to_id != TAX_TARGET and from_id != TAX_TARGET:
             tax = round(amount * 0.1, 3)
             amount -= tax
-            self.send(from_id, TAX_TARGET, tax, message="Tax")
+            ret_val = self.send(from_id, TAX_TARGET, tax, message="Tax")
+            if ret_val != 0:
+                return 4
             balanceFrom = self.get_balance(from_id)
 
         # Update balance
         query_update = "UPDATE {} SET balance = ? WHERE user_id = ?".format(BALANCE_TABLE)
         cur = self.db.cursor()
-        cur.execute(query_update, (balanceFrom - amount, from_id))
-
-        # Verify to_id exists in db
-        balanceTo = self.get_balance(to_id)
-        if balanceTo < 0:
-            log_error("(send) user_id {} doesn't exist".format(to_id))
-            return 2
+        cur.execute(query_update, (round(balanceFrom - amount, 3), from_id))
 
         # Update balance
         cur = self.db.cursor()
-        cur.execute(query_update, (balanceTo + amount, to_id))
+        cur.execute(query_update, (round(balanceTo + amount, 3), to_id))
 
         # Add transaction
         query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'))".format(TRANSACTION_TABLE)

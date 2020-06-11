@@ -163,6 +163,8 @@ def send(message):
         res = "Erreur : Le destinataire n'a pas de compte en banque."
     elif status == 3:
         res = "Erreur : L'expéditeur n'a pas les fonds suffisants pour cette opération."
+    elif status == 4:
+        res = "Erreur : La taxe n'a pas pu être payée. Virement annulé."
 
     log_info(res)
     return res
