@@ -2,6 +2,7 @@ import db
 import os
 from log import *
 from settings import *
+import sqlite3
 
 def init_db(filename):
     try:

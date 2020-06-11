@@ -11,6 +11,9 @@ def is_private(channel):
 def is_allowed(channel):
     return is_private(channel) or channel.name in ALLOWED_CHAN
 
+async def is_admin(ctx):
+    return ctx.author.id in ADMIN
+
 def mention(user_id):
     return "<@{}>".format(user_id)
 

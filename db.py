@@ -3,8 +3,6 @@ from settings import *
 import os
 from log import *
 
-
-
 def connect_db(filename):
     try:
         conn = sqlite3.connect(filename)
