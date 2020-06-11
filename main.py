@@ -510,7 +510,7 @@ async def pay_salaries_error(ctx, error):
         raise error
 
 
-@client.command(name="monthly_error")
+@client.command(name="monthly_taxes")
 async def get_monthly_taxes(ctx, month = None):
     if month is not None:
         pattern_month = re.compile("(\d\d\d\d-\d\d)")
