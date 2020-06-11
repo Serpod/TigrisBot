@@ -102,7 +102,7 @@ def get_balance(message):
     user_id = message.author.id
     balance = bank.get_balance(user_id)
     if balance >= 0:
-        res = "Vous avez {}ŧ (tigris) en banque.".format(balance)
+        res = "Vous avez {}ŧ (tigris) en banque.".format(balance/100)
     else:
         res = "Erreur : Vous n'avez pas de compte en banque.\n"
         res += "Vous pouvez en créer un avec la commande `.new_account`."
@@ -127,7 +127,7 @@ def send(message):
         return res
 
     try:
-        amount = round(float(msg_cont[2]), 3)
+        amount = int(round(float(msg_cont[2]), 3) * 100)
     except Exception as e:
         res = "Erreur : Mauvais format du montant de la transaction : {}".format(msg_cont[2])
         log_error(res)
@@ -179,7 +179,7 @@ async def get_history(message):
         res.append("Votre historique :")
         res.append("")
         for t in transacs:
-            amount = ("{}" + str(t[2])).rjust(10)
+            amount = ("{}" + str(t[2]/100)).rjust(10)
             if t[0] == user_id:
                 username = await get_name(t[1])
                 res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('-'), t[3]))
@@ -196,10 +196,10 @@ async def get_all_balance():
     for user_id, balance in all_balance:
         tot += balance
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(balance).rjust(10))
+        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(balance/100).rjust(10))
 
     res += '`' + '-'*42 + "`\n"
-    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot).rjust(10))
+    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot/100).rjust(10))
     log_info(res)
     return res
 
@@ -222,7 +222,7 @@ async def get_all_jobs(is_admin=False):
             curr_job += "```markdown\n"
         curr_job += "* {}".format(title.center(70))
         if is_admin:
-            curr_job += "| {}ŧ | {}".format(str(salary).rjust(10), job_id)
+            curr_job += "| {}ŧ | {}".format(str(salary/100).rjust(10), job_id)
         curr_job += '\n'
 
     if len(all_jobs) > 0:
@@ -239,7 +239,7 @@ async def get_all_salaries():
     for user_id, salary in all_salaries:
         tot += salary
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(salary).rjust(10))
+        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(salary/100).rjust(10))
 
     res += '`' + '-'*42 + "`\n"
     res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot).rjust(10))
@@ -266,7 +266,7 @@ def new_job(message):
         return res
 
     try:
-        salary = int(msg[2])
+        salary = int(round(float(msg[2]), 3) * 100)
     except:
         res = "Erreur : Mauvais format du salaire (chiffres décimaux uniquement) : {}".format(msg[2])
         log_error(res)
@@ -333,7 +333,7 @@ async def get_jobs(message, is_other=False):
     for _, job_id, title, salary in jobs:
         res += "* {}".format(title.center(70))
         if not is_other:
-            res += "| {}ŧ | {}".format(str(salary).rjust(10), job_id)
+            res += "| {}ŧ | {}".format(str(salary/100).rjust(10), job_id)
         res += '\n'
     res += "```"
 
@@ -365,7 +365,7 @@ def get_salary(message):
             log_error(res)
             return res
         else:
-            res = "{} a un salaire mensuel de {} pour l'ensemble de ses métiers.".format(utils.mention(user_id), salary)
+            res = "{} a un salaire mensuel de {} pour l'ensemble de ses métiers.".format(utils.mention(user_id), salary/100)
             log_info(res)
             return res
     else:
@@ -374,7 +374,7 @@ def get_salary(message):
             log_error(res)
             return res
         else:
-            res = "Vous avez un salaire mensuel de {}ŧ pour l'ensemble de vos métiers.".format(salary)
+            res = "Vous avez un salaire mensuel de {}ŧ pour l'ensemble de vos métiers.".format(salary/100)
             log_info(res)
             return res
 
@@ -419,15 +419,21 @@ def get_monthly_taxes(message):
 
         month = match.group(1)
         sum_tax = bank.get_monthly_taxes(month)
-        res = "Somme des taxes récoltées pour le mois {} : {}ŧ".format(month, sum_tax)
+        if sum_tax is None:
+            res = "Aucune taxe n'a été récoltée ce mois-ci."
+            log_error(res)
+            return res
+        res = "Somme des taxes récoltées pour le mois {} : {}ŧ".format(month, sum_tax/100)
     else:
         # len(msg) == 0:
         sum_tax = bank.get_monthly_taxes()
-        res = "Somme des taxes récoltées pour ce mois-ci : {}ŧ".format(sum_tax)
+        if sum_tax is None:
+            res = "Aucune taxe n'a été récoltée ce mois-ci."
+            log_error(res)
+            return res
+        res = "Somme des taxes récoltées pour ce mois-ci : {}ŧ".format(sum_tax/100)
 
 
-    if sum_tax is None:
-        res = "Aucune taxe n'a été récoltée ce mois-ci."
 
     log_info(res)
     return res
