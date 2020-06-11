@@ -11,10 +11,10 @@ from settings import *
 # Code for the bot itself (parse commands)
 
 client = commands.Bot(command_prefix='.')
-#client.help_command = None
+client.help_command = None
 bank = tigris.TigrisBank()
 
-@client.command(name="usage")
+@client.command(name="help")
 async def usage(ctx):
     msg = []
     usage = '```markdown\n'
@@ -183,7 +183,8 @@ async def send_error(ctx, error):
         res = "Erreur : Trop de paramètres.\n"
         res += "N'oubliez pas d'entourer votre message de guillemets (\")"
         await ctx.send(res)
-    raise error
+    else:
+        raise error
 
 
 @client.command(name="history")
@@ -236,7 +237,11 @@ async def get_all_balance(ctx):
 @get_all_balance.error
 async def get_all_balance_error(ctx, error):
     log_error(error)
-    raise error
+    if isinstance(error, commands.CheckFailure):
+        res = "Erreur : vous n'avez pas le droit de faire ceci."
+        await ctx.send(res)
+    else:
+        raise error
 
 
 @client.command(name="all_jobs")
@@ -244,7 +249,6 @@ async def get_all_jobs(ctx):
     """
     The jobs of everyone (with salaries).
     """
-    admin = 
     all_jobs = bank.get_all_jobs()
     res = "Métiers :\n\n"
     jobs = []
@@ -280,7 +284,7 @@ async def get_all_jobs_error(ctx, error):
 
 @client.command(name="all_salaries")
 @commands.check(utils.is_admin)
-async def get_all_salaries():
+async def get_all_salaries(ctx):
     all_salaries = bank.get_all_salaries()
     res = "Salaires des citoyens :\n\n"
     tot = 0
@@ -290,7 +294,7 @@ async def get_all_salaries():
         res += "`{}|{}ŧ`\n".format(username.ljust(30), str(salary/100).rjust(10))
 
     res += '`' + '-'*42 + "`\n"
-    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot).rjust(10))
+    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot/100).rjust(10))
     dm = await ctx.author.create_dm()
     await utils.send_msg(res.split('\n'), dm)
 
@@ -298,12 +302,16 @@ async def get_all_salaries():
 @get_all_salaries.error
 async def get_all_salaries_error(ctx, error):
     log_error(error)
-    raise error
+    if isinstance(error, commands.CheckFailure):
+        res = "Erreur : vous n'avez pas le droit de faire ceci."
+        await ctx.send(res)
+    else:
+        raise error
 
 
 @client.command(ignore_extra=False)
 @commands.check(utils.is_admin)
-def new_job(ctx, user: discord.Member, salary: float, title):
+async def new_job(ctx, user: discord.Member, salary: float, title):
     """
     Add a new job with:
 
@@ -322,42 +330,33 @@ def new_job(ctx, user: discord.Member, salary: float, title):
 @new_job.error
 async def new_job_error(ctx, error):
     log_error(error)
-    if isinstance(error, discord.BadArgument):
+    if isinstance(error, commands.BadArgument):
         await ctx.send(error)
-    elif isinstance(error, discord.MissingRequiredArgument):
+    elif isinstance(error, commands.MissingRequiredArgument):
         res = "Erreur : Nombre de paramètres insuffisant.\n"
         res += "`.new_job <user_id> <salary> <title>`"
         await ctx.send(res)
-    elif isinstance(error, discord.TooManyArguments):
+    elif isinstance(error, commands.TooManyArguments):
         res = "Erreur : Nombre de paramètres trop grand.\n"
-        res += "`.new_job <user_id> <salary> <title>`"
+        res += "`.new_job <user_id> <salary> <title>`\n"
         res += "N'oubliez pas d'entourer le titre de l'emploi par des guillemets (\")"
         await ctx.send(res)
+    if isinstance(error, commands.CheckFailure):
+        res = "Erreur : vous n'avez pas le droit de faire ceci."
+        await ctx.send(res)
+    else:
+        raise error
 
-def del_job(message):
+
+@client.command(ignore_extra=True)
+@commands.check(utils.is_admin)
+async def del_job(ctx, user: discord.Member, job_id: int):
     """
     Remove a given job for a given user with:
 
     .del_job <user_id> <job_id>
     """
-    msg = message.content.split()
-    if len(msg) < 3:
-        res = "Erreur : Nombre de paramètres insuffisant.\n"
-        res += "`.del_job <user_id> <job_id>`"
-        return res
-
-    user_id = utils.get_user_id(msg[1])
-    if user_id is None:
-        res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(msg[1])
-        log_error(res)
-        return res
-
-    try:
-        job_id = int(msg[2])
-    except:
-        res = "Erreur : Mauvais format de l'identifiant de métier (chiffres décimaux uniquement) : {}".format(msg[2])
-        log_error(res)
-        return res
+    user_id = user.id
 
     job = bank.remove_job(user_id, job_id)
     if job is None:
@@ -367,19 +366,29 @@ def del_job(message):
 
     res = "{} n'est plus {}.".format(utils.mention(user_id), job[2])
     log_info(res)
-    return res
+    await ctx.send(res)
 
 
-async def get_jobs(message, is_other=False):
-    if is_other:
-        m = message.content.split()[1]
-        user_id = utils.get_user_id(m)
-        if user_id is None:
-            res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(m)
-            log_error(res)
-            return res
+@del_job.error
+async def del_job_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.del_job <user_id> <job_id>`"
+        await ctx.send(res)
+    if isinstance(error, commands.CheckFailure):
+        res = "Erreur : vous n'avez pas le droit de faire ceci."
+        await ctx.send(res)
     else:
-        user_id = message.author.id
+        raise error
+
+
+@client.command(name="jobs")
+async def get_jobs(ctx, user: discord.Member = None):
+    if user is None:
+        user_id = ctx.author.id
+    else:
+        user_id = user.id
 
     jobs = bank.get_jobs(user_id)
 
@@ -387,56 +396,78 @@ async def get_jobs(message, is_other=False):
     res += "```\n"
     for _, job_id, title, salary in jobs:
         res += "* {}".format(title.center(70))
-        if not is_other:
+        if user is None or await utils.is_admin(ctx):
             res += "| {}ŧ | {}".format(str(salary/100).rjust(10), job_id)
         res += '\n'
     res += "```"
 
     log_info(res)
-    return res.split('\n')
-
-
-def get_salary(message):
-    m = message.content.split()
-    if message.author.id in ADMIN and len(m) == 2:
-        user_id = utils.get_user_id(m[1])
-        if user_id is None:
-            res = "Erreur : Mauvais format de l'identifiant utilisateur : {}".format(m[1])
-            log_error(res)
-            return res
-    elif len(m) == 1:
-        user_id = message.author.id
+    if user is None or await utils.is_admin(ctx):
+        dm = await ctx.author.create_dm()
+        await utils.send_msg(res.split('\n'), dm)
     else:
-        res = "Erreur : Mauvais nombre de paramètre.\n"
-        res += ".salary (classique)\n"
-        res += ".salary [<user>] (privilégié)"
-        log_error(res)
-        return res
+        await utils.send_msg(res.split('\n'), ctx)
+
+
+@get_jobs.error
+async def get_jobs_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctw.send(error)
+    else:
+        raise error
+
+
+@client.command(name="salary")
+async def get_salary(ctx, user: discord.Member = None):
+    if user is None:
+        user_id = ctx.author.id
+    else:
+        if not await utils.is_admin(ctx):
+            return
+        user_id = user.id
 
     salary = bank.get_salary(user_id)
-    if len(m) == 2:
+    if user is not None:
+        dm = await ctx.author.create_dm()
+
         if salary is None:
             res = "Erreur : {} n'a aucun de métier.".format(utils.mention(user_id))
             log_error(res)
-            return res
         else:
             res = "{} a un salaire mensuel de {} pour l'ensemble de ses métiers.".format(utils.mention(user_id), salary/100)
             log_info(res)
-            return res
+
+        await dm.send(res)
     else:
         if salary is None:
             res = "Erreur : vous n'avez pas de métier."
             log_error(res)
-            return res
         else:
             res = "Vous avez un salaire mensuel de {}ŧ pour l'ensemble de vos métiers.".format(salary/100)
             log_info(res)
-            return res
+
+        await ctx.send(res)
 
 
-def pay_salaries(message):
-    from_id = message.author.id
+@get_salary.error
+async def get_salary_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(error)
+    elif isinstance(error, commands.TooManyArguments):
+        res = "Erreur : Mauvais nombre de paramètre.\n"
+        res += ".salary (classique)\n"
+        res += ".salary [<user>] (privilégié)"
+        await ctx.send(res)
+    else:
+        raise error
 
+
+@client.command()
+@commands.check(utils.is_admin)
+async def pay_salaries(ctx):
+    from_id = ctx.author.id
     ret_values = bank.pay_all_salaries(from_id)
 
     res = []
@@ -444,33 +475,51 @@ def pay_salaries(message):
     error = []
     for user_id, v, salary in ret_values:
         if v == 1:
-            res.append("Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id)))
+            error.append("Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id)))
             log_error(res[-1])
-            return res, paid, error
+            break
 
         if v == 0:
             res.append("Son salaire a été versé à {}.\n".format(utils.mention(user_id)))
             paid.append((user_id, salary))
+            log_info(res[-1])
         elif v == 2:
-            error.append((user_id, "Erreur : La salaire de {} est nul.".format(utils.mention(user_id))))
+            error.append("Erreur : La salaire de {} est nul.".format(utils.mention(user_id)))
+            log_error(res[-1])
         elif v == 3:
-            error.append((user_id, "Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(user_id))))
+            error.append("Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(user_id)))
             res.append(error[-1][1])
             log_error(res[-1])
-            return res, paid, error
+            break
 
-    return res, paid, error
+    for user_id, amount in paid:
+        user = await client.fetch_user(user_id)
+        dm = await user.create_dm()
+        await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount))
+
+    await utils.send_msg(error + res, ctx)
 
 
-def get_monthly_taxes(message):
-    msg = message.content.split()
-    if len(msg) > 1:
+@pay_salaries.error
+async def pay_salaries_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.CheckFailure):
+        res = "Erreur : vous n'avez pas le droit de faire ceci."
+        await ctx.send(res)
+    else:
+        raise error
+
+
+@client.command(name="monthly_error")
+async def get_monthly_taxes(ctx, month = None):
+    if month is not None:
         pattern_month = re.compile("(\d\d\d\d-\d\d)")
         match = pattern_month.match(msg[1])
         if match is None:
             res = "Erreur : Mauvais format pour le mois demandé ({})".format(msg[1])
             log_error(res)
-            return res
+            await ctx.send(res)
+            return
 
         month = match.group(1)
         sum_tax = bank.get_monthly_taxes(month)
@@ -480,7 +529,6 @@ def get_monthly_taxes(message):
             return res
         res = "Somme des taxes récoltées pour le mois {} : {}ŧ".format(month, sum_tax/100)
     else:
-        # len(msg) == 0:
         sum_tax = bank.get_monthly_taxes()
         if sum_tax is None:
             res = "Aucune taxe n'a été récoltée ce mois-ci."
@@ -491,7 +539,13 @@ def get_monthly_taxes(message):
 
 
     log_info(res)
-    return res
+    await ctx.send(res)
+
+
+@get_monthly_taxes.error
+async def get_monthly_taxes_error(ctx, error):
+    log_error(error)
+    raise error
 
 
 async def get_name(user_id):
@@ -527,97 +581,6 @@ async def on_message(message):
 
     if DEBUG and message.content.startswith("."):
         log_info("{} ({}): {}".format(message.author.name, message.author.id, message.content))
-    #    await message.channel.send("```{}```".format(message.content))
-
-    # ADMIN only functions
-    if message.author.id in ADMIN:
-        if message.content.startswith(".all_jobs"):
-            msg = message.content.split()
-            if len(msg) == 2 and msg[1] == "classic":
-                jobs = await get_all_jobs()
-                await utils.send_msg(jobs, message.channel)
-            else:
-                jobs = await get_all_jobs(True)
-                dm = await message.author.create_dm()
-                await utils.send_msg(jobs, dm)
-
-        elif message.content.startswith(".del_job"):
-            try:
-                await message.channel.send("{}".format(del_job(message)))
-            except Exception as e:
-                log_error("An error occured in del_job function")
-                log_error(e)
-                traceback.print_exc()
-
-        elif message.content.startswith(".salary"):
-            res = get_salary(message)
-            dm = await message.author.create_dm()
-            await dm.send(res)
-
-        elif message.content.startswith(".pay_salaries"):
-            res, paid, error = pay_salaries(message)
-            for user_id, amount in paid:
-                user = await client.fetch_user(user_id)
-                dm = await user.create_dm()
-                await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount))
-            try:
-                await utils.send_msg(res, message.channel)
-            except Exception as e:
-                log_error("An error occured in pay_salaries function")
-                log_error(e)
-                traceback.print_exc()
-
-
-    # Functions for everyone
-    if message.content.startswith(".jobs"):
-        msg = message.content.split()
-        if len(msg) == 1:
-            res = await get_jobs(message, is_other=False)
-            dm = await message.author.create_dm()
-            await utils.send_msg(res, dm)
-        elif len(msg) == 2:
-            try:
-                await utils.send_msg(await get_jobs(message, is_other=True), message.channel)
-            except Exception as e:
-                log_error("An error occured in jobs function")
-                log_error(e)
-                traceback.print_exc()
-        else:
-            res = "Erreur : Mauvais nombre de paramètres.\n"
-            res += ".jobs [<user>]"
-            log_error(res)
-            try:
-                await utils.send_msg(res, message.channel)
-            except Exception as e:
-                log_error("An error occured in jobs function")
-                log_error(e)
-                traceback.print_exc()
-
-    elif message.content.startswith(".monthly_taxes"):
-        try:
-            res = get_monthly_taxes(message)
-            await message.channel.send(res)
-        except Exception as e:
-            log_error("An error occured in monthly_taxes function")
-            log_error(e)
-            traceback.print_exc()
-
-    elif message.author.id not in ADMIN and message.content.startswith(".all_jobs"):
-        try:
-            jobs = await get_all_jobs()
-            await utils.send_msg(jobs, message.channel)
-        except Exception as e:
-            log_error("An error occured in all_jobs function")
-            log_error(e)
-            traceback.print_exc()
-
-    elif message.author.id not in ADMIN and message.content.startswith(".salary"):
-        try:
-            await message.channel.send(get_salary(message))
-        except Exception as e:
-            log_error("An error occured in help function")
-            log_error(e)
-            traceback.print_exc()
 
     await client.process_commands(message)
 
