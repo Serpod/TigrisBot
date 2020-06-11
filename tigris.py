@@ -1,17 +1,45 @@
 import db
+import os
 from log import *
 from settings import *
+
+def init_db(filename):
+    try:
+        conn = sqlite3.connect(filename)
+    except Exception as e:
+        log_error(e)
+        return
+
+    queries = []
+    queries.append("CREATE TABLE {} (user_id INTEGER, balance INTEGER)".format(BALANCE_TABLE))
+    queries.append("CREATE TABLE {} (from_id INTEGER, to_id INTEGER, amount INTEGER, comment TEXT, date TEXT)".format(TRANSACTION_TABLE))
+    queries.append("CREATE TABLE {} (user_id INTEGER, job_id INTEGER, title TEXT, salary INTEGER)".format(JOB_TABLE))
+    queries.append("CREATE TABLE {} (user_id INTEGER, name TEXT)".format(NAME_TABLE))
+    for q in queries:
+        conn.execute(q)
+
+    # Account that will hold all the money
+    query_init = "INSERT INTO {}(user_id, balance) VALUES (?, ?)".format(BALANCE_TABLE)
+    conn.execute(query_init, (ADMIN[0], INIT_MONEY))
+    conn.commit()
+    query_init = "INSERT INTO {}(user_id, name) VALUES (?, ?)".format(NAME_TABLE)
+    conn.execute(query_init, (ADMIN[0], ADMIN_NAME[0]))
+    conn.commit()
+    conn.close()
 
 class TigrisBank():
     """
     Interface with the database
     """
-    def __init__(self, db_name=DB_NAME):
+    def __init__(self, db_name=DB_NAME_TIGRIS):
+        if not os.path.isfile(db_name):
+            init_db(db_name)
+
         self.db = db.connect_db(db_name)
         if self.db is not None:
             log_info("DB {} succesfully loaded".format(db_name))
         else:
-            log_error("Error opening DB")
+            log_error("Error opening tigris DB")
 
     def get_name(self, user_id):
         query_fetch = "SELECT name FROM {} WHERE user_id = ?".format(NAME_TABLE)
@@ -242,6 +270,7 @@ class TigrisBank():
             ret_values.append((user_id, self.pay_salary(from_id, user_id, salary), salary))
 
         return ret_values
+
 
     def get_monthly_taxes(self, month=None):
         cur = self.db.cursor()
