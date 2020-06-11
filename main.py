@@ -413,7 +413,7 @@ def get_monthly_taxes(message):
         pattern_month = re.compile("(\d\d\d\d-\d\d)")
         match = pattern_month.match(msg[1])
         if match is None:
-            res = "Erreur : Mauvais format pour le mois demandé"
+            res = "Erreur : Mauvais format pour le mois demandé ({})".format(msg[1])
             log_error(res)
             return res
 
