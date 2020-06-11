@@ -17,3 +17,8 @@ DEBUG = True
 
 TAX_RATE = 0.1 # Percentage of taxes on each transaction.
 TAX_TARGET = TIGRISBOT_ID # Discord User ID of the user collecting taxes
+
+# INVENTORY
+DB_NAME_MARKETPLACE = "./marketplace.db" # Name of the file containing the SQLite marketplace database
+OBJECT_TABLE = "object" # Name of the table containing the objects
+FOR_SALE_TABLE = "for_sale" # Name of the table containing items to be sold
