@@ -155,7 +155,7 @@ async def send(ctx, to_user: discord.Member, amount: float, msg = ''):
     # Branch on return status
     if status == 0:
         res = "L'opération est enregistrée.\n"
-        if to_id == TIGRISBOT_ID:
+        if to_id == client.user.id:
             res += "Fais un voeu."
     elif status == 1:
         res = "Erreur : L'expéditeur n'a pas de compte en banque."
@@ -576,7 +576,7 @@ async def on_message(message):
     if bank is None:
         return
 
-    if message.author == client.user:
+    if message.author.id == client.user.id:
         return
 
     if DEBUG and message.content.startswith("."):

@@ -12,11 +12,10 @@ ADMIN = [0] # Discord User ID of the admins (must be changed)
 ADMIN_NAME = [""] # Name of the ADMIN, only for initialisation
 INIT_MONEY = 100000000 # Amount of tigris for the first user
 
-TIGRISBOT_ID = 0 # ID of the bot (must be changed)
 DEBUG = True
 
 TAX_RATE = 0.1 # Percentage of taxes on each transaction.
-TAX_TARGET = TIGRISBOT_ID # Discord User ID of the user collecting taxes
+TAX_TARGET = ADMIN[0]
 
 # INVENTORY
 DB_NAME_MARKETPLACE = "./marketplace.db" # Name of the file containing the SQLite marketplace database
