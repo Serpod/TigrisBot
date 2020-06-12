@@ -1,4 +1,6 @@
 import db
+import os
+import sqlite3
 from log import *
 from settings import *
 
