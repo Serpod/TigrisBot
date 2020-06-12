@@ -107,6 +107,7 @@ async def usage(ctx):
 
 @client.command(name="create", ignore_extra=False)
 async def create_item(ctx, name, description = ""):
+    description = description[:256]
     if not marketplace.create_item(ctx.author.id, name, description):
         res = "Erreur : Vous ne pouvez créer qu'un seul objet par jour."
     else:
@@ -131,7 +132,7 @@ async def create_item_error(ctx, error):
 
 @client.command(name="delete")
 async def del_item(ctx, item_id: int):
-    item = get_item_by_id(item_id)
+    item = marketplace.get_item_by_id(item_id)
     if item is None:
         res = "Erreur : l'objet n°{} n'existe pas.".format(item_id)
     elif not marketplace.delete_item(ctx.author.id, item_id):
@@ -166,23 +167,25 @@ async def get_inventory(ctx):
         await dm.send(res)
         return
 
-    res = "Vos objets :\n"
-    res += "`{}|{}|{}|{}|{}`".format(
+    res = []
+    res.append("Vos objets :")
+    res.append("`{}|{}|{}|{}|{}`".format(
             "Créateur de l'objet".center(25),
             "Identifiant de l'objet".center(25),
             "Date de création".center(25),
             "Nom de l'objet".center(25),
             "Description".center(25)
-            )
+            ))
+    res.append('`' + '-'*129 + '`')
     for creator_id, item_name, item_desc, item_id, creation_date in inventory:
-        res += "`{}|{}|{}|{}|{}`".format(
+        res.append("`{}|{}|{}|{}|{}`".format(
                 (await get_name(creator_id)).center(25),
                 str(item_id).center(25),
                 creation_date.center(25),
                 item_name.center(25),
                 item_desc.center(25)
-                )
-    await utils.send_msg(res.split('\n'), dm)
+                ))
+    await utils.send_msg(res, dm)
 
 
 @get_inventory.error

@@ -71,9 +71,9 @@ class Marketplace():
             # Compute new item_id
             query_max_item_id = "SELECT MAX(item_id) FROM {}".format(ITEM_TABLE)
             cur = self.db.cursor()
-            cur.execute(query_max_item_id, (user_id,))
+            cur.execute(query_max_item_id)
             max_item_id = cur.fetchone()[0]
-            if max_job_id is None:
+            if max_item_id is None:
                 # First item
                 item_id = 0
             else:
@@ -89,7 +89,7 @@ class Marketplace():
             self.db.rollback()
             log_error("(send) Unknown exception in database transaction")
             log_error(e)
-            return -1
+            return False
 
     
     def is_owner(self, user_id, item_id):
@@ -107,7 +107,7 @@ class Marketplace():
         if not self.is_owner(user_id, item_id):
             return False
 
-        query_delete = "DELETE FROM {} WHERE owner_id = ? AND item_id = ?"
+        query_delete = "DELETE FROM {} WHERE owner_id = ? AND item_id = ?".format(ITEM_TABLE)
         cur = self.db.cursor()
         cur.execute(query_delete, (user_id, item_id))
         self.db.commit()
