@@ -125,6 +125,7 @@ class Marketplace():
 
 
     def sell(self, seller_id, item_id, price, buyer_id=None):
+        assert price >= 0
         self.db.execute("BEGIN")
 
         try:

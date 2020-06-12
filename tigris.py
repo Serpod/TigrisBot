@@ -95,6 +95,7 @@ class TigrisBank():
 
 
     def send(self, from_id, to_id, amount, message=''):
+        assert amount >= 0
         if from_id == to_id:
             return 5
         # Verify from_id exists in db
