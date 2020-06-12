@@ -102,7 +102,8 @@ async def usage(ctx):
         usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
         msg.append(utils.surround_markdown(usage))
 
-    await utils.send_msg(msg, ctx)
+    dm = await ctx.author.create_dm()
+    await utils.send_msg(msg, dm)
 
 
 @client.command(name="create", ignore_extra=False)
