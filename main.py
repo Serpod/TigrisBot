@@ -153,7 +153,7 @@ async def get_inventory(ctx):
 
     dm = await ctx.author.create_dm()
 
-    if inventory is None:
+    if not inventory:
         res = "Vous n'avez pas d'objets."
         await dm.send(res)
         return

@@ -47,7 +47,7 @@ class Marketplace():
         cur.execute(query_inventory, (user_id, ))
         inventory = cur.fetchall()
 
-        if inventory is None:
+        if not inventory:
             log_error("(get_inventory) No item for user_id {}".format(user_id))
 
         return inventory
