@@ -60,6 +60,14 @@ async def usage(ctx):
     usage += "\t\tVous transmet votre inventaire.\n"
     msg.append(utils.surround_markdown(usage))
 
+    usage = "\t* .create <name> [<description>]\n"
+    usage += "\t\tCrée un objet (si vous n'en avez pas déjà créé aujourd'hui).\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .delete <item_id>\n"
+    usage += "\t\tSupprime l'objet n°<item_id>. Vous devez en être le propriétaire.\n"
+    msg.append(utils.surround_markdown(usage))
+
     usage = "\t* .help\n"
     usage += "\t\tAffiche ce message.\n"
     msg.append(utils.surround_markdown(usage))
