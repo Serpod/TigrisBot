@@ -19,66 +19,80 @@ marketplace = marketplace.Marketplace()
 @client.command(name="help")
 async def usage(ctx):
     msg = []
-    usage = '```markdown\n'
-    usage += "# Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
+
+    usage = "# Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
     usage += "## Commandes disponibles pour tous et toutes :\n"
     usage += "\t* .new_account [<user>]\n"
     usage += "\t\tCrée un compte en banque pour l'utilisateur.rice renseigné.e (s'il y a lieu) ou pour l'expéditeur.ice du message.\n"
     usage += "\t\t(Ne fonctionne que si le compte n'existe pas déjà.)\n"
-    usage += '\n'
-    usage += "\t* .balance\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .balance\n"
     usage += "\t\tVous transmet par message privé votre solde.\n"
-    usage += '\n'
-    usage += "\t* .send <to> <amount> [<message>]\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .send <to> <amount> [<message>]\n"
     usage += "\t\tSi vous avez les fonds nécéssaires, envoie <amount> tigris à l'utilisateur.ice <to>.\n"
     usage += "\t\tUn message (facultatif) <message> peut être renseigné.\n"
-    usage += '\n'
-    usage += "\t* .history\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .history\n"
     usage += "\t\tVous transmet par message privé votre historique de transactions.\n"
-    usage += '\n'
-    usage += "\t* .jobs [<user>]\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .jobs [<user>]\n"
     usage += "\t\tVous transmet votre métier ou affiche le métier de <user>.\n"
-    usage += '\n'
-    usage += "\t* .all_jobs\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .all_jobs\n"
     usage += "\t\tAffiche tous les métiers des citoyens du royaume.\n"
-    usage += '\n'
-    usage += "\t* .salary\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .salary\n"
     usage += "\t\tAffiche votre salaire.\n"
-    usage += '\n'
-    usage += "\t* .monthly_taxes [YYYY-MM]\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .monthly_taxes [YYYY-MM]\n"
     usage += "\t\tAffiche la somme des taxes récoltées pour ce mois-ci ou pour le mois renseigné en suivant le format YYYY-MM (par exemple pour Juin 2020 : 2020-06).\n"
-    usage += '\n'
-    usage += "\t* .help\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .inventory\n"
+    usage += "\t\tVous transmet votre inventaire.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .help\n"
     usage += "\t\tAffiche ce message.\n"
-    usage += "```"
-    msg.append(usage)
+    msg.append(utils.surround_markdown(usage))
     if ctx.author.id in ADMIN:
-        usage = "```markdown\n"
-        usage += "## Commandes spéciales (pour notre bon Roy et certains privilégiés) :\n"
+        usage = "## Commandes spéciales (pour notre bon Roy et certains privilégiés) :\n"
         usage += "\t* .all_balance\n"
         usage += "\t\tVous transmet par message privé l'état de tous les comptes en banque.\n"
-        usage += '\n'
-        usage += "\t* .all_jobs [classic]\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .all_jobs\n"
         usage += "\t\tTransmet, en privé, tous les métiers des citoyens du royaume, avec le salaire associé.\n"
-        usage += "\t\tSi classic est renseigné, équivalent à la commande disponibles pour tout le monde.\n"
-        usage += '\n'
-        usage += "\t* .new_job <user> <salary> <title>\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .new_job <user> <salary> <title>\n"
         usage += "\t\tAjoute un nouveau métier à <user>. Il devient <title> et est payé <salary>.\n"
-        usage += '\n'
-        usage += "\t* .del_job <user> <job_id>\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .del_job <user> <job_id>\n"
         usage += "\t\tSupprime le métier <job_id> de <user>.\n"
-        usage += '\n'
-        usage += "\t* .salary [<user>]\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .salary [<user>]\n"
         usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
-        usage += '\n'
-        usage += "\t* .all_salaries\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .all_salaries\n"
         usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
-        usage += '\n'
-        usage += "\t* .pay_salaries\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .pay_salaries\n"
         usage += "\t\tDéclenche la paye des salaires à tous les citoyens.\n"
         usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
-        usage += "```"
-        msg.append(usage)
+        msg.append(utils.surround_markdown(usage))
 
     await utils.send_msg(msg, ctx)
 

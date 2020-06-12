@@ -42,3 +42,9 @@ async def send_msg(msg_chunks, channel):
         res += m + "\n"
     await channel.send(res)
     return 0
+
+def surround_markdown(msg):
+    res = "```markdown\n"
+    res += msg
+    res += "```"
+    return res
