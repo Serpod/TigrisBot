@@ -96,6 +96,40 @@ async def usage(ctx):
 
     await utils.send_msg(msg, ctx)
 
+@client.command(name="inventory")
+async def get_inventory(ctx):
+    inventory = marketplace.get_inventory(ctx.author.id)
+
+    dm = await ctx.author.create_dm()
+
+    if inventory is None:
+        res = "Vous n'avez pas d'objets."
+        await dm.send(res)
+        return
+
+    res = "Vos objets :\n"
+    res += "`{}|{}|{}|{}`".format(
+            "Créateur de l'objet".center(25),
+            "Date de création".center(25),
+            "Nom de l'objet".center(25),
+            "Description".center(25)
+            )
+    for creator_id, item_name, item_desc, item_id, creation_date in inventory:
+        res += "`{}|{}|{}|{}|{}`".format(
+                (await get_name(creator_id)).center(25),
+                creation_date.center(25),
+                item_name.center(25),
+                item_desc.center(25)
+                )
+    await utils.send_msg(res.split('\n'), dm)
+
+
+@get_inventory.error
+async def get_inventory_error(ctx, error):
+    log_error(error)
+    raise error
+
+
 @client.command(ignore_extra=True)
 async def new_account(ctx, user: discord.Member = None):
     """
