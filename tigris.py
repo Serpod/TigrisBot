@@ -96,6 +96,7 @@ class TigrisBank():
 
     def send(self, from_id, to_id, amount, message=''):
         assert amount >= 0
+        amount = int(amount)
         if from_id == to_id:
             return 5
         # Verify from_id exists in db
@@ -112,7 +113,7 @@ class TigrisBank():
 
         # Tax
         if to_id != TAX_TARGET and from_id != TAX_TARGET:
-            tax = amount * 0.1
+            tax = int(amount * 0.1)
             amount -= tax
             ret_val = self.send(from_id, TAX_TARGET, tax, message="Tax")
             if ret_val != 0:
