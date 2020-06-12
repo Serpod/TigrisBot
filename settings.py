@@ -19,5 +19,5 @@ TAX_TARGET = ADMIN[0]
 
 # INVENTORY
 DB_NAME_MARKETPLACE = "./marketplace.db" # Name of the file containing the SQLite marketplace database
-OBJECT_TABLE = "object" # Name of the table containing the objects
+ITEM_TABLE = "item" # Name of the table containing the items
 FOR_SALE_TABLE = "for_sale" # Name of the table containing items to be sold

@@ -4,6 +4,7 @@ import traceback
 import tigris
 import utils
 import re
+import marketplace
 from log import *
 from settings import *
 
@@ -13,6 +14,7 @@ from settings import *
 client = commands.Bot(command_prefix='.')
 client.help_command = None
 bank = tigris.TigrisBank()
+marketplace = marketplace.Marketplace()
 
 @client.command(name="help")
 async def usage(ctx):
