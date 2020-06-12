@@ -14,6 +14,7 @@ def init_db(filename):
     queries = []
     queries.append("CREATE TABLE {} (creator_id INTEGER, owner_id INTEGER, name TEXT, description TEXT, item_id INTEGER, creation_date TEXT)".format(ITEM_TABLE))
     queries.append("CREATE TABLE {} (seller_id INTEGER, item_id INTEGER, price INTEGER, buyer_id INTEGER)".format(FOR_SALE_TABLE))
+    queries.append("CREATE TABLE {} (seller_id INTEGER, buyer_id INTEGER, price INTEGER, name TEXT, date TEXT)".format(TRADE_TABLE))
     for q in queries:
         conn.execute(q)
 
@@ -135,7 +136,7 @@ class Marketplace():
                 return 1
 
             # Check that the item is not currently being sold
-            if is_for_sale(item_id):
+            if self.is_for_sale(item_id):
                 self.db.rollback()
                 log_error("(sell) {} is already for sale".format(item_id))
                 return 2
@@ -165,7 +166,41 @@ class Marketplace():
         self.db.commit()
         return 0
 
-    
+
+    def give(self, from_id, to_id, item_id):
+        self.db.execute("BEGIN")
+        try:
+            if not self.is_owner(from_id, item_id):
+                self.db.rollback()
+                return 1
+            if self.is_for_sale(item_id):
+                self.db.rollback()
+                return 2
+            query_transfer_ownership = "UPDATE {} SET owner_id = ? WHERE item_id = ?".format(ITEM_TABLE)
+            cur = self.db.cursor()
+            cur.execute(query_transfer_ownership, (to_id, item_id))
+            self.db.commit()
+            return True
+        except:
+            self.db.rollback()
+            return -1
+
+
+    def get_for_sale_items(self):
+        query_fetch = "SELECT {1}.name, {0}.item_id, {0}.price, {0}.seller_id, {0}.buyer_id FROM {0} JOIN {1} ON {0}.item_id = {1}.item_id".format(FOR_SALE_TABLE, ITEM_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch)
+        return cur.fetchall()
+
+
+    def get_all_trades(self):
+        query_fetch = "SELECT seller_id, buyer_id, price, name, date FROM {}".format(TRADE_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch)
+        trades = cur.fetchall()
+        return trades
+
+
     def buy(self, buyer_id, item_id, bank):
         # Remove concurrency vulns ?
         self.db.execute("BEGIN")
@@ -174,7 +209,7 @@ class Marketplace():
             # Check item is for sale, and for the right buyer
             query_getsale = "SELECT buyer_id, seller_id, price FROM {} WHERE item_id = ?".format(FOR_SALE_TABLE)
             cur = self.db.cursor()
-            cur.execute(query_cancel, (item_id, ))
+            cur.execute(query_getsale, (item_id, ))
             data = cur.fetchone()
             if data is None:
                 self.db.rollback()
@@ -187,17 +222,22 @@ class Marketplace():
             item_name = item[2]
 
             # Send money
-            ret_val = bank.send(data[0], data[1], data[2], "Buy: {} ({})".format(item_name, item_id))
+            ret_val = bank.send(buyer_id, data[1], data[2], "Buy: {} ({})".format(item_name, item_id))
             if ret_val:
                 self.db.rollback()
                 return ret_val
 
+            self.cancel_sale(data[1], item_id)
             # Change item owner
             query_transfer_ownership = "UPDATE {} SET owner_id = ? WHERE item_id = ?".format(ITEM_TABLE)
             cur = self.db.cursor()
             cur.execute(query_transfer_ownership, (buyer_id, item_id))
 
-            self.cancel_sale(data[1], item_id)
+            item_name = self.get_item_by_id(item_id)[2]
+
+            query_add_trade = "INSERT INTO {} (seller_id, buyer_id, price, name, date) VALUES (?, ?, ?, ?, datetime('now'))".format(TRADE_TABLE)
+            cur = self.db.cursor()
+            cur.execute(query_add_trade, (data[1], buyer_id, data[2], item_name))
 
             self.db.commit()
             return 0

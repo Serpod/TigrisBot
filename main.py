@@ -22,7 +22,11 @@ async def usage(ctx):
 
     usage = "# Service de gestion de la monnaie de Fibreville : le tigris (ŧ).\n\n"
     usage += "## Commandes disponibles pour tous et toutes :\n"
-    usage += "\t* .new_account [<user>]\n"
+    usage += "\t* .help\n"
+    usage += "\t\tAffiche ce message.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .new_account [<user>]\n"
     usage += "\t\tCrée un compte en banque pour l'utilisateur.rice renseigné.e (s'il y a lieu) ou pour l'expéditeur.ice du message.\n"
     usage += "\t\t(Ne fonctionne que si le compte n'existe pas déjà.)\n"
     msg.append(utils.surround_markdown(usage))
@@ -68,8 +72,29 @@ async def usage(ctx):
     usage += "\t\tSupprime l'objet n°<item_id>. Vous devez en être le propriétaire.\n"
     msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .help\n"
-    usage += "\t\tAffiche ce message.\n"
+    usage = "\t* .trades\n"
+    usage += "\t\tVous transmet l'historique des ventes et échanges publics.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .give <user> <item_id>\n"
+    usage += "\t\tDonne l'objet <item_id> à <user>.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .for_sale_items\n"
+    usage += "\t\tAffiche les objets en vente.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .sell <item_id> <price> [<user>]\n"
+    usage += "\t\tMet en vente l'objet <item_id> au prix de <price>ŧ.\n"
+    usage += "\t\tOptionnellement, seul <user> peut acheter cet objet.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .cancel_sale <item_id>\n"
+    usage += "\t\tRetire l'objet <item_id> de la vente.\n"
+    msg.append(utils.surround_markdown(usage))
+
+    usage = "\t* .buy <item_id>\n"
+    usage += "\t\tAchète l'objet <item_id>.\n"
     msg.append(utils.surround_markdown(usage))
     if ctx.author.id in ADMIN:
         usage = "## Commandes spéciales (pour notre bon Roy et certains privilégiés) :\n"
@@ -104,6 +129,240 @@ async def usage(ctx):
 
     dm = await ctx.author.create_dm()
     await utils.send_msg(msg, dm)
+
+
+@client.command(ignore_extra=False)
+async def buy(ctx, item_id: int):
+    ret_val = marketplace.buy(ctx.author.id, item_id, bank)
+    if ret_val == 1:
+        res = "Erreur : L'acheteur n'a pas de compte en banque."
+    elif ret_val == 2:
+        res = "Erreur : Le vendeur n'a pas de compte en banque."
+    elif ret_val == 3:
+        res = "Erreur : L'acheteur n'a pas les fonds suffisants pour cette opération."
+    elif ret_val == 4:
+        res = "Erreur : La taxe n'a pas pu être payée. Vente annulée."
+    elif ret_val == 5:
+        res = "Erreur : L'acheteur et le vendeur sont les mêmes."
+    elif ret_val == 6:
+        res = "Erreur : L'objet n'est pas mis en vente."
+    elif ret_val == 7:
+        res = "Erreur : Le vendeur n'a pas autorisé l'acheteur à acheter cet objet."
+    elif ret_val == -1:
+        return
+    elif ret_val == 0:
+        res = "Achat effectué."
+    else:
+        return
+
+    await ctx.send(res)
+
+
+@buy.error
+async def buy_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(error)
+    elif isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.buy <item_id>`"
+        await ctx.send(res)
+    elif isinstance(error, commands.TooManyArguments):
+        res = "Erreur : Trop de paramètres.\n"
+        res += "`.buy <item_id>`"
+        await ctx.send(res)
+    else:
+        raise error
+
+
+@client.command(ignore_extra=False)
+async def cancel_sale(ctx, item_id: int):
+    ret_val = marketplace.cancel_sale(ctx.author.id, item_id)
+
+    if ret_val == 1:
+        res = "Erreur : Vous n'êtes pas le propriétaire de cet objet."
+    elif ret_val == 2:
+        res = "Erreur : Cet objet n'est pas mis en vente actuellement."
+    elif ret_val == 0:
+        res = "L'objet a été retiré de la vente."
+    else:
+        return
+
+    await ctx.send(res)
+
+
+@cancel_sale.error
+async def cancel_sale_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(error)
+    elif isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.cancel_sale <item_id>`"
+        await ctx.send(res)
+    elif isinstance(error, commands.TooManyArguments):
+        res = "Erreur : Trop de paramètres.\n"
+        res += "`.cancel_sale <item_id>`"
+        await ctx.send(res)
+    else:
+        raise error
+
+
+@client.command(ignore_extra=False)
+async def sell(ctx, item_id: int, price: float, buyer: discord.Member = None):
+    if buyer is None:
+        buyer_id = None
+    else:
+        buyer_id = buyer.id
+
+    ret_val = marketplace.sell(
+            ctx.author.id,
+            item_id,
+            int(round(price, 3)*100),
+            buyer_id)
+
+    if ret_val == 1:
+        res = "Erreur : Vous n'êtes pas le propriétaire de cet objet."
+    elif ret_val == 2:
+        res = "Erreur : Cet objet est déjà en vente."
+    elif ret_val == -1:
+        return
+    elif ret_val == 0:
+        res = "Cet objet est maintenant mis en vente."
+    else:
+        return
+
+    await ctx.send(res)
+
+
+@sell.error
+async def sell_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(error)
+    elif isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.sell <item_id> <price> [<user>]`"
+        await ctx.send(res)
+    elif isinstance(error, commands.TooManyArguments):
+        res = "Erreur : Trop de paramètres.\n"
+        res += "`.sell <item_id> <price> [<user>]`"
+        await ctx.send(res)
+    else:
+        raise error
+
+
+@client.command(name="for_sale")
+async def get_for_sale_items(ctx):
+    items = marketplace.get_for_sale_items()
+
+    if not items:
+        res = "Il n'y a aucun objet en vente actuellement."
+        await ctx.send(res)
+        return
+
+    res = []
+    res.append("En vente :")
+    res.append("`{}|{}|{}|{}|{}`".format(
+            "Nom de l'objet".center(25),
+            "Identifiant de l'objet".center(25),
+            "Prix".center(25),
+            "Nom du vendeur".center(25),
+            "Nom de l'acheteur visé".center(25)
+            ))
+    res.append('`' + '-'*129 + '`')
+    for name, item_id, price, seller_id, buyer_id in items:
+        if buyer_id is None:
+            buyer = ""
+        else:
+            buyer = await get_name(buyer_id)
+        res.append("`{}|{}|{}|{}|{}`".format(
+                name.center(25),
+                str(item_id).center(25),
+                (str(price/100) + 'ŧ').center(25),
+                (await get_name(seller_id)).center(25),
+                buyer.center(25)
+                ))
+
+    await utils.send_msg(res, ctx)
+
+
+@get_for_sale_items.error
+async def get_for_sale_items_error(ctx, error):
+    log_error(error)
+    raise error
+
+
+@client.command(ignore_extra=False)
+async def give(ctx, user: discord.Member, item_id: int):
+    to_id = user.id
+    from_id = ctx.author.id
+    ret_val = marketplace.give(from_id, to_id, item_id)
+    if ret_val == 0:
+        res = "{} a bien reçu votre don.".format(user.mention)
+    elif ret_val == 1:
+        res = "Erreur : Vous n'êtes pas propriétaire de cet objet"
+    elif ret_val == 2:
+        res = "Erreur : Vous ne pouvez pas donner un objet que vous avez mis en vente."
+    else:
+        return
+    await ctx.send(res)
+
+
+@give.error
+async def give_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(error)
+    elif isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.give <user> <item_id>`"
+        await ctx.send(res)
+    elif isinstance(error, commands.TooManyArguments):
+        res = "Erreur : Trop de paramètres.\n"
+        res += "`.give <user> <item_id>`"
+        await ctx.send(res)
+    else:
+        raise error
+
+
+@client.command(name="trades")
+async def get_trades(ctx):
+    dm = await ctx.author.create_dm()
+
+    trades = marketplace.get_all_trades()
+
+    if not trades:
+        res = "Il n'y a jamais eu de vente ou d'échange public."
+        await dm.send(res)
+        return
+
+    res = []
+    res.append("Les échanges :")
+    res.append("`{}|{}|{}|{}|{}`".format(
+            "Vendeur".center(25),
+            "Acheteur".center(25),
+            "Prix".center(25),
+            "Nom de l'objet".center(25),
+            "Date de la transaction".center(25)
+            ))
+    res.append('`' + '-'*129 + '`')
+    for seller_id, buyer_id, price, name, date in trades:
+        res.append("`{}|{}|{}|{}|{}`".format(
+                (await get_name(seller_id)).center(25),
+                (await get_name(buyer_id)).center(25),
+                str(price + 'ŧ').center(25),
+                name.center(25),
+                date.center(25)
+                ))
+
+    await utils.send_msg(res, dm)
+
+
+@get_trades.error
+async def get_trades_error(ctx, error):
+    log_error(error)
+    raise error
 
 
 @client.command(name="create", ignore_extra=False)
