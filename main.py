@@ -121,6 +121,32 @@ async def create_item_error(ctx, error):
         raise error
 
 
+@client.command(name="delete")
+async def del_item(ctx, item_id: int):
+    item = get_item_by_id(item_id)
+    if item is None:
+        res = "Erreur : l'objet n°{} n'existe pas.".format(item_id)
+    elif not marketplace.delete_item(ctx.author.id, item_id):
+        res = "Erreur : vous n'en êtes pas le propriétaire de {}.".format(item[2])
+    else:
+        res = "Vous venez de détruire {}".format(item[2])
+
+    await ctx.send(res)
+
+
+@del_item.error
+async def del_item_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.BadArgument):
+        await ctx.send(error)
+    if isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.delete <item_id>`"
+        await ctx.send(res)
+    else:
+        raise error
+
+
 @client.command(name="inventory")
 async def get_inventory(ctx):
     inventory = marketplace.get_inventory(ctx.author.id)
