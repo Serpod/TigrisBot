@@ -96,6 +96,31 @@ async def usage(ctx):
 
     await utils.send_msg(msg, ctx)
 
+
+@client.command(name="create", ignore_extra=False)
+async def create_item(ctx, name, description = ""):
+    if not marketplace.create_item(ctx.author.id, name, description):
+        res = "Erreur : Vous ne pouvez créer qu'un seul objet par jour."
+    else:
+        res = "Vous venez de créer {}".format(name)
+    await ctx.send(res)
+
+
+@create_item.error
+async def create_item_error(ctx, error):
+    log_error(error)
+    if isinstance(error, commands.MissingRequiredArgument):
+        res = "Erreur : Nombre de paramètres insuffisant.\n"
+        res += "`.create <name> [<description>]`"
+        await ctx.send(res)
+    elif isinstance(error, commands.TooManyArguments):
+        res = "Erreur : Trop de paramètres.\n"
+        res += "N'oubliez pas d'entourer votre nom d'objet ou votre description de guillemets (\")"
+        await ctx.send(res)
+    else:
+        raise error
+
+
 @client.command(name="inventory")
 async def get_inventory(ctx):
     inventory = marketplace.get_inventory(ctx.author.id)
@@ -108,8 +133,9 @@ async def get_inventory(ctx):
         return
 
     res = "Vos objets :\n"
-    res += "`{}|{}|{}|{}`".format(
+    res += "`{}|{}|{}|{}|{}`".format(
             "Créateur de l'objet".center(25),
+            "Identifiant de l'objet".center(25),
             "Date de création".center(25),
             "Nom de l'objet".center(25),
             "Description".center(25)
@@ -117,6 +143,7 @@ async def get_inventory(ctx):
     for creator_id, item_name, item_desc, item_id, creation_date in inventory:
         res += "`{}|{}|{}|{}|{}`".format(
                 (await get_name(creator_id)).center(25),
+                str(item_id).center(25),
                 creation_date.center(25),
                 item_name.center(25),
                 item_desc.center(25)
