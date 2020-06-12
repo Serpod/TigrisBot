@@ -35,6 +35,12 @@ class Marketplace():
             log_error("Error opening marketplace DB")
 
 
+    def get_item_by_id(self, item_id):
+        query_fetch = "SELECT creator_id, owner_id, name, description, creation_date FROM {} WHERE item_id = ?".format(ITEM_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_fetch, (item_id,))
+        return cur.fetchone()
+
     def get_inventory(self, user_id):
         query_inventory = "SELECT creator_id, name, description, item_id, creation_date FROM {} WHERE owner_id = ?".format(ITEM_TABLE)
         cur = self.db.cursor()
@@ -49,6 +55,8 @@ class Marketplace():
 
     def create_item(self, user_id, name, description):
         # Only one item each day per user
+        self.db.execute("BEGIN")
+
         today = "strftime('%Y-%m-%d', 'now')"
         query_created_today = "SELECT * FROM {} WHERE creation_time = {} and creator_id = ?".format(ITEM_TABLE, today)
         cur = self.db.cursor()
@@ -56,6 +64,7 @@ class Marketplace():
         obj = cur.fetchone()
         if obj is not None:
             log_error("(create_item) {} is trying to create a second item today".format(user_id))
+            self.db.rollback()
             return False
 
         # Compute new item_id
@@ -72,6 +81,7 @@ class Marketplace():
         query_create = "INSERT INTO {} (creator_id, owner_id, name, description, item_id, creation_date) VALUES (?, ?, ?, ?, ?, {})".format(ITEM_TABLE, today)
         cur = self.db.cursor()
         cur.execute(query_create, (user_id, user_id, name, description, item_id))
+
         self.db.commit()
         return True
 
@@ -109,6 +119,8 @@ class Marketplace():
 
 
     def sell(self, seller_id, item_id, price, buyer_id=None):
+        self.db.execute("BEGIN")
+
         # Check if the user has the item he's trying to sell
         if not self.is_owner(seller_id, item_id):
             return 1
@@ -120,18 +132,56 @@ class Marketplace():
 
         query_sell = "INSERT INTO {} (seller_id, item_id, price, buyer_id) VALUES (?, ?, ?, ?)".format(FOR_SALE_TABLE)
         cur = self.db.cursor()
-        cur.execute(query_sell, seller_id, item_id, price, buyer_id)
+        cur.execute(query_sell, (seller_id, item_id, price, buyer_id))
+
         self.db.commit()
         return 0
 
 
-    def cancel_sale(self, user_id, item_id):
-        None
+    def cancel_sale(self, seller_id, item_id):
+        if not self.is_owner(seller_id, item_id):
+            return 1
+        if not self.is_for_sale(item_id):
+            return 2
+
+        query_cancel = "DELETE FROM {} WHERE seller_id = ? AND item_id = ?".format(FOR_SALE_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_cancel, (seller_id, item_id))
+        self.db.commit()
+        return 0
 
     
-    def buy(self, from_id, item_id, to_id, token):
-        # Check if the token is right
-        # Check if from_id and to_id are right
-        # Change item owner
+    def buy(self, buyer_id, item_id, bank):
+        # Remove concurrency vulns ?
+        self.db.execute("BEGIN")
+
+        # Check item is for sale, and for the right buyer
+        query_getsale = "SELECT buyer_id, seller_id, price FROM {} WHERE item_id = ?".format(FOR_SALE_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_cancel, (item_id, ))
+        data = cur.fetchone()
+        if data is None:
+            self.db.rollback()
+            return 6
+        if data[0] is not None and data[0] != buyer_id:
+            self.db.rollback()
+            return 7
+
+        item = self.get_item_by_id(item_id)
+        item_name = item[2]
+
         # Send money
-        None
+        ret_val = bank.send(data[0], data[1], data[2], "Buy: {} ({})".format(item_name, item_id))
+        if ret_val:
+            self.db.rollback()
+            return ret_val
+
+        # Change item owner
+        query_transfer_ownership = "UPDATE {} SET owner_id = ? WHERE item_id = ?".format(ITEM_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_transfer_ownership, (buyer_id, item_id))
+
+        self.cancel_sale(data[1], item_id)
+
+        self.db.commit()
+        return 0
