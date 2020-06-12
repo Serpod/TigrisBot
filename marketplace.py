@@ -180,7 +180,7 @@ class Marketplace():
             cur = self.db.cursor()
             cur.execute(query_transfer_ownership, (to_id, item_id))
             self.db.commit()
-            return True
+            return 0
         except:
             self.db.rollback()
             return -1
