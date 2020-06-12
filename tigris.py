@@ -120,30 +120,36 @@ class TigrisBank():
         # Remove concurrency vulns ?
         self.db.execute("BEGIN")
 
-        # Verify sufficient funds
-        if balanceFrom < amount:
-            log_error("(send) insufficiant funds from {}".format(from_id))
+        try:
+            # Verify sufficient funds
+            if balanceFrom < amount:
+                log_error("(send) insufficiant funds from {}".format(from_id))
+                self.db.rollback()
+                return 3
+
+            # Update balance
+            query_update = "UPDATE {} SET balance = balance - ? WHERE user_id = ?".format(BALANCE_TABLE)
+            cur = self.db.cursor()
+            cur.execute(query_update, (amount, from_id))
+
+            # Update balance
+            query_update = "UPDATE {} SET balance = balance + ? WHERE user_id = ?".format(BALANCE_TABLE)
+            cur = self.db.cursor()
+            cur.execute(query_update, (amount, to_id))
+
+            # Add transaction
+            query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'))".format(TRANSACTION_TABLE)
+            cur = self.db.cursor()
+            cur.execute(query_transac, (from_id, to_id, amount, message))
+
+            self.db.commit()
+
+            return 0
+        except Exception as e:
             self.db.rollback()
-            return 3
-
-        # Update balance
-        query_update = "UPDATE {} SET balance = balance - ? WHERE user_id = ?".format(BALANCE_TABLE)
-        cur = self.db.cursor()
-        cur.execute(query_update, (amount, from_id))
-
-        # Update balance
-        query_update = "UPDATE {} SET balance = balance + ? WHERE user_id = ?".format(BALANCE_TABLE)
-        cur = self.db.cursor()
-        cur.execute(query_update, (amount, to_id))
-
-        # Add transaction
-        query_transac = "INSERT INTO {}(from_id, to_id, amount, comment, date) VALUES(?, ?, ?, ?, datetime('now', 'localtime'))".format(TRANSACTION_TABLE)
-        cur = self.db.cursor()
-        cur.execute(query_transac, (from_id, to_id, amount, message))
-
-        self.db.commit()
-
-        return 0
+            log_error("(send) Unknown exception in database transaction")
+            log_error(e)
+            return -1
 
 
     def get_history(self, user_id):

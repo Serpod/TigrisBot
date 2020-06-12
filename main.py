@@ -276,6 +276,8 @@ async def send(ctx, to_user: discord.Member, amount: float, msg = ''):
         res = "Erreur : L'expéditeur n'a pas les fonds suffisants pour cette opération."
     elif status == 4:
         res = "Erreur : La taxe n'a pas pu être payée. Virement annulé."
+    elif status == -1:
+        return
 
     log_info(res)
     await ctx.send(res)
