@@ -299,3 +299,10 @@ class TigrisBank():
         if sum_tax is None:
             log_error("(get_monthly_tax) No tax for the month {}".format(month))
         return sum_tax
+
+
+    def get_citizens(self):
+        query_citizens = "SELECT user_id FROM {}".format(BALANCE_TABLE)
+        cur = self.db.cursor()
+        cur.execute(query_citizens)
+        return cur.fetchall()

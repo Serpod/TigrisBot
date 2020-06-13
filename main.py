@@ -131,6 +131,21 @@ async def usage(ctx):
     await utils.send_msg(msg, dm)
 
 
+@client.command(name="citizens")
+async def get_citizens(ctx):
+    dm = await ctx.author.create_dm()
+    citizens = bank.get_citizens()
+    res = []
+    if not citizens:
+        await dm.send("La ville est déserte.")
+        return
+
+    res.append("Liste des citoyens de Fibreville :")
+    for citizen in citizens:
+        res.append("{} : {}".format(await get_name(citizen[0]), utils.mention(citizen[0])))
+    await utils.send_msg(res, dm)
+
+
 @client.command(ignore_extra=False)
 async def buy(ctx, item_id: int):
     ret_val = marketplace.buy(ctx.author.id, item_id, bank)
