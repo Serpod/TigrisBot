@@ -106,13 +106,15 @@ class Marketplace():
 
     def delete_item(self, user_id, item_id):
         if not self.is_owner(user_id, item_id):
-            return False
+            return 1
+        if self.is_for_sale(item_id):
+            return 2
 
         query_delete = "DELETE FROM {} WHERE owner_id = ? AND item_id = ?".format(ITEM_TABLE)
         cur = self.db.cursor()
         cur.execute(query_delete, (user_id, item_id))
         self.db.commit()
-        return True
+        return 0
 
 
     def is_for_sale(self, item_id):

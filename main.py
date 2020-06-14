@@ -410,10 +410,15 @@ async def del_item(ctx, item_id: int):
     item = marketplace.get_item_by_id(item_id)
     if item is None:
         res = "Erreur : l'objet n°{} n'existe pas.".format(item_id)
-    elif not marketplace.delete_item(ctx.author.id, item_id):
-        res = "Erreur : vous n'en êtes pas le propriétaire de {}.".format(item[2])
     else:
-        res = "Vous venez de détruire {}".format(item[2])
+        ret_val = marketplace.delete_item(ctx.author.id, item_id)
+        if ret_val == 1:
+            res = "Erreur : vous n'en êtes pas le propriétaire de {}.".format(item[2])
+        elif ret_val == 2:
+            res = "Erreur : l'objet est actuellement en vente.\n"
+            res += "Vous devez le retirez de la vente avant de le détruire."
+        else:
+            res = "Vous venez de détruire {}".format(item[2])
 
     await ctx.send(res)
 
