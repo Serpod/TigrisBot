@@ -366,7 +366,7 @@ async def get_trades(ctx):
         res.append("`{}|{}|{}|{}|{}`".format(
                 (await get_name(seller_id)).center(25),
                 (await get_name(buyer_id)).center(25),
-                str(price + 'ŧ').center(25),
+                (str(price/100) + 'ŧ').center(25),
                 name.center(25),
                 date.center(25)
                 ))
