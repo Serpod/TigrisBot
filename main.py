@@ -80,7 +80,7 @@ async def usage(ctx):
     usage += "\t\tDonne l'objet <item_id> à <user>.\n"
     msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .for_sale_items\n"
+    usage = "\t* .for_sale\n"
     usage += "\t\tAffiche les objets en vente.\n"
     msg.append(utils.surround_markdown(usage))
 
