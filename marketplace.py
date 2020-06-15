@@ -59,7 +59,7 @@ class Marketplace():
         self.db.execute("BEGIN")
         try:
 
-            today = "strftime('%Y-%m-%d', 'now')"
+            today = "strftime('%Y-%m-%d', 'now', 'localtime')"
             query_created_today = "SELECT * FROM {} WHERE creation_date = {} and creator_id = ?".format(ITEM_TABLE, today)
             cur = self.db.cursor()
             cur.execute(query_created_today, (user_id, ))
@@ -237,7 +237,7 @@ class Marketplace():
 
             item_name = self.get_item_by_id(item_id)[2]
 
-            query_add_trade = "INSERT INTO {} (seller_id, buyer_id, price, name, date) VALUES (?, ?, ?, ?, datetime('now'))".format(TRADE_TABLE)
+            query_add_trade = "INSERT INTO {} (seller_id, buyer_id, price, name, date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'))".format(TRADE_TABLE)
             cur = self.db.cursor()
             cur.execute(query_add_trade, (data[1], buyer_id, data[2], item_name))
 
