@@ -279,11 +279,11 @@ async def get_for_sale_items(ctx):
     res = []
     res.append("En vente :")
     res.append("`{}|{}|{}|{}|{}`".format(
-            "Nom de l'objet".center(25),
-            "Identifiant de l'objet".center(25),
-            "Prix".center(25),
-            "Nom du vendeur".center(25),
-            "Nom de l'acheteur visé".center(25)
+            "Nom de l'objet".center(60),
+            "ID objet".center(10),
+            "Prix".center(15),
+            "Nom du vendeur".center(20),
+            "Nom de l'acheteur".center(20)
             ))
     res.append('`' + '-'*129 + '`')
     for name, item_id, price, seller_id, buyer_id in items:
@@ -292,11 +292,11 @@ async def get_for_sale_items(ctx):
         else:
             buyer = await get_name(buyer_id)
         res.append("`{}|{}|{}|{}|{}`".format(
-                name.center(25),
-                str(item_id).center(25),
-                (str(price/100) + 'ŧ').center(25),
-                (await get_name(seller_id)).center(25),
-                buyer.center(25)
+                name.center(60),
+                str(item_id).center(10),
+                (str(price/100) + 'ŧ').center(15),
+                (await get_name(seller_id)).center(20),
+                buyer.center(20)
                 ))
 
     await utils.send_msg(res, ctx)
