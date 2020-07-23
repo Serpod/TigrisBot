@@ -969,7 +969,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.channel.id == 715878295668916244 and 735957436518760508 in [r.id for r in message.author.roles]:
+    if message.channel.id == FIBREVILLE_CHANNEL_ID and BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
         await message.channel.send(random.choice(LAUGH_LIST))
 
     if not utils.is_allowed(message.channel):
