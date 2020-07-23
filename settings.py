@@ -24,6 +24,6 @@ FOR_SALE_TABLE = "for_sale" # Name of the table containing items to be sold
 TRADE_TABLE = "trade" # Name of the table containing history of trades
 
 # BOUFFON
-LAUGH_LIST = ["*rires*", "*trololo*", "*rires enregistrés*", "*hin hin hin*", "*ha. ha. ha.*"]
+LAUGH_LIST =  ["*rires*", "*trololo*", "*rires enregistrés*", "*hin hin hin*", "*ha. ha. ha.*", "*HueHueHue*", "*Ahah*", "*Hahah.*"]
 FIBREVILLE_CHANNEL_ID = 715878295668916244
 BOUFFON_ROLES_ID = 735957436518760508
