@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import traceback
+import random
 import tigris
 import utils
 import re
@@ -965,10 +966,15 @@ async def set_name(user_id):
 async def on_ready():
     log_info("We have logged in as {0.user}".format(client))
 
+
 @client.event
 async def on_message(message):
+    if message.channel.id == FIBREVILLE_CHANNEL_ID and BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
+        await message.channel.send(random.choice(LAUGH_LIST))
+
     if not utils.is_allowed(message.channel):
         return
+
     if bank is None:
         return
 
