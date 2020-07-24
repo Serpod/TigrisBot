@@ -67,7 +67,7 @@ class Marketplace():
             if obj is not None:
                 log_error("(create_item) {} is trying to create a second item today".format(user_id))
                 self.db.rollback()
-                return False
+                return 0
 
             # Compute new item_id
             query_max_item_id = "SELECT MAX(item_id) FROM {}".format(ITEM_TABLE)
@@ -85,12 +85,12 @@ class Marketplace():
             cur.execute(query_create, (user_id, user_id, name, description, item_id))
 
             self.db.commit()
-            return True
+            return item_id
         except Exception as e:
             self.db.rollback()
             log_error("(send) Unknown exception in database transaction")
             log_error(e)
-            return False
+            return 0
 
     
     def is_owner(self, user_id, item_id):
@@ -203,7 +203,7 @@ class Marketplace():
         return trades
 
 
-    def buy(self, buyer_id, item_id, bank):
+    def buy(self, buyer_id, item_id, bank, tax_free=False):
         # Remove concurrency vulns ?
         self.db.execute("BEGIN")
 
@@ -224,7 +224,7 @@ class Marketplace():
             item_name = item[2]
 
             # Send money
-            ret_val = bank.send(buyer_id, data[1], data[2], "Buy: {} ({})".format(item_name, item_id))
+            ret_val = bank.send(buyer_id, data[1], data[2], "Buy: {} ({})".format(item_name, item_id), tax_free)
             if ret_val:
                 self.db.rollback()
                 return ret_val

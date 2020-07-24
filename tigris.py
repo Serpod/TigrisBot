@@ -94,7 +94,7 @@ class TigrisBank():
         return True
 
 
-    def send(self, from_id, to_id, amount, message=''):
+    def send(self, from_id, to_id, amount, message='', tax_free=False):
         assert amount >= 0
         amount = int(amount)
         if from_id == to_id:
@@ -112,7 +112,7 @@ class TigrisBank():
             return 2
 
         # Tax
-        if to_id != TAX_TARGET and from_id != TAX_TARGET:
+        if not tax_free and to_id != TAX_TARGET and from_id != TAX_TARGET and to_id not in TAX_FREE_USERS and from_id not in TAX_FREE_USERS:
             tax = int(amount * 0.1)
             amount -= tax
             ret_val = self.send(from_id, TAX_TARGET, tax, message="Tax")
@@ -261,7 +261,7 @@ class TigrisBank():
 
         if self.get_balance(to_id) < 0:
             # Create account
-            self.new_account(to_id, "")
+            self.new_account(to_id)
 
         from_b = self.get_balance(from_id)
         if from_b < 0:
@@ -274,6 +274,7 @@ class TigrisBank():
 
 
         # Finally, pay salary
+        log_info("(pay_salary) Paying salary ({}ŧ) to {}".format(salary/100, to_id))
         return self.send(from_id, to_id, salary, "Salary")
 
 

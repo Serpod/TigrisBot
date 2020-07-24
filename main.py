@@ -149,7 +149,8 @@ async def get_citizens(ctx):
 
 @client.command(ignore_extra=False)
 async def buy(ctx, item_id: int):
-    ret_val = marketplace.buy(ctx.author.id, item_id, bank)
+    is_tax_free = ctx.guild.id in TAX_FREE_SERVER
+    ret_val = marketplace.buy(ctx.author.id, item_id, bank, tax_free=is_tax_free)
     if ret_val == 1:
         res = "Erreur : L'acheteur n'a pas de compte en banque."
     elif ret_val == 2:
@@ -358,8 +359,8 @@ async def get_trades(ctx):
     res.append("`{}|{}|{}|{}|{}`".format(
             "Vendeur".center(25),
             "Acheteur".center(25),
-            "Prix".center(25),
-            "Nom de l'objet".center(25),
+            "Prix".center(10),
+            "Nom de l'objet".center(35),
             "Date de la transaction".center(25)
             ))
     res.append('`' + '-'*129 + '`')
@@ -367,8 +368,8 @@ async def get_trades(ctx):
         res.append("`{}|{}|{}|{}|{}`".format(
                 (await get_name(seller_id)).center(25),
                 (await get_name(buyer_id)).center(25),
-                (str(price/100) + 'ŧ').center(25),
-                name.center(25),
+                (str(price/100) + 'ŧ').center(10),
+                name.center(35),
                 date.center(25)
                 ))
 
@@ -384,10 +385,11 @@ async def get_trades_error(ctx, error):
 @client.command(name="create", ignore_extra=False)
 async def create_item(ctx, name, description = ""):
     description = description[:256]
-    if not marketplace.create_item(ctx.author.id, name, description):
+    item_id = marketplace.create_item(ctx.author.id, name, description)
+    if not item_id:
         res = "Erreur : Vous ne pouvez créer qu'un seul objet par jour."
     else:
-        res = "Vous venez de créer {}".format(name)
+        res = "Vous venez de créer {} (id : {})".format(name, item_id)
     await ctx.send(res)
 
 
@@ -450,20 +452,18 @@ async def get_inventory(ctx):
 
     res = []
     res.append("Vos objets :")
-    res.append("`{}|{}|{}|{}|{}`".format(
-            "Créateur de l'objet".center(25),
-            "Identifiant de l'objet".center(25),
+    res.append("`{}|{}|{}|{}`".format(
+            "ID objet".center(10),
             "Date de création".center(25),
             "Nom de l'objet".center(25),
             "Description".center(25)
             ))
-    res.append('`' + '-'*129 + '`')
+    res.append('`' + '-'*103 + '`')
     for creator_id, item_name, item_desc, item_id, creation_date in inventory:
-        res.append("`{}|{}|{}|{}|{}`".format(
-                (await get_name(creator_id)).center(25),
-                str(item_id).center(25),
+        res.append("`{}|{}|{}|{}`".format(
+                str(item_id).center(10),
                 creation_date.center(25),
-                item_name.center(25),
+                item_name.center(35),
                 item_desc.center(25)
                 ))
     await utils.send_msg(res, dm)
@@ -544,8 +544,10 @@ async def send(ctx, to_user: discord.Member, amount: float, msg = ''):
 
     msg = msg[:256]
 
+    is_tax_free = ctx.guild.id in TAX_FREE_SERVER
+
     # Call DB function
-    status = bank.send(from_id, to_id, amount, msg)
+    status = bank.send(from_id, to_id, amount, msg, tax_free=is_tax_free)
 
     # Branch on return status
     if status == 0:
@@ -892,7 +894,7 @@ async def pay_salaries(ctx):
     for user_id, amount in paid:
         user = await client.fetch_user(user_id)
         dm = await user.create_dm()
-        await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount))
+        await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount/100))
 
     await utils.send_msg(error + res, ctx)
 
