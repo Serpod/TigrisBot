@@ -1008,6 +1008,9 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    if message.author.id == client.user.id:
+        return
+
     if BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
         await message.channel.send(random.choice(LAUGH_LIST))
 
@@ -1015,9 +1018,6 @@ async def on_message(message):
         return
 
     if bank is None:
-        return
-
-    if message.author.id == client.user.id:
         return
 
     if DEBUG and message.content.startswith("."):
