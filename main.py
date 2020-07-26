@@ -1011,7 +1011,7 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
 
-    if BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
+    if isinstance(message.author, discord.Member) and BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
         await message.channel.send(random.choice(LAUGH_LIST))
 
     if not utils.is_allowed(message.channel):
@@ -1020,7 +1020,7 @@ async def on_message(message):
     if bank is None:
         return
 
-    if DEBUG and message.content.startswith("."):
+    if message.content.startswith("."):
         log_info("{} ({}): {}".format(message.author.name, message.author.id, message.content))
     #    await message.channel.send("```{}```".format(message.content))
 
