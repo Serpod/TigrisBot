@@ -10,6 +10,7 @@ ALLOWED_CHAN = ["general"] # Name of the channels on which the bot is allowed
 
 ADMIN = [0] # Discord User ID of the admins (must be changed)
 ADMIN_NAME = [""] # Name of the ADMIN, only for initialisation
+TIGRISBOT_CREATOR = 0 # Creator of the tigrisbot
 INIT_MONEY = 100000000 # Amount of tigris for the first user
 
 DEBUG = True

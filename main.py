@@ -131,6 +131,43 @@ async def usage(ctx):
     dm = await ctx.author.create_dm()
     await utils.send_msg(msg, dm)
 
+@client.command()
+async def fillon(ctx):
+    transacs = bank.get_history(ADMIN[0])
+    if transacs is None:
+        res = ["Erreur : Pas de compte en banque."]
+    else:
+        res = []
+        res.append("Historique du ministre des finances :")
+        res.append("")
+        for t in transacs:
+            amount = ("{}" + str(t[2]/100)).rjust(10)
+            if t[0] == ADMIN[0]:
+                username = await get_name(t[1])
+                res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('-'), t[3]))
+            elif t[1] == ADMIN[0]:
+                username = await get_name(t[0])
+                res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('+'), t[3]))
+    log_info('\n'.join(res))
+    await utils.send_msg(res, ctx)
+
+
+@client.command()
+async def say(ctx, msg, channel: discord.TextChannel = None):
+    inventory = marketplace.get_inventory(ctx.author.id)
+    found = False
+    for creator_id, name, _, _, _ in inventory:
+        if creator_id == TIGRISBOT_CREATOR and name == "Télécommande du TigrisBot":
+            found = True
+            break
+    if not found:
+        await ctx.send("Erreur : Vous n'avez pas la Télécommande du TigrisBot")
+        return
+    if channel is None:
+        await ctx.send(msg)
+    else:
+        await channel.send(msg)
+
 
 @client.command(name="citizens")
 async def get_citizens(ctx):
@@ -971,7 +1008,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    if message.channel.id == FIBREVILLE_CHANNEL_ID and BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
+    if BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
         await message.channel.send(random.choice(LAUGH_LIST))
 
     if not utils.is_allowed(message.channel):
@@ -985,6 +1022,7 @@ async def on_message(message):
 
     if DEBUG and message.content.startswith("."):
         log_info("{} ({}): {}".format(message.author.name, message.author.id, message.content))
+    #    await message.channel.send("```{}```".format(message.content))
 
     await client.process_commands(message)
 
