@@ -182,7 +182,7 @@ async def nini(ctx):
     date = m.created_at
     pickle.dump([date, all_losers], open(filename, "wb"))
 
-    all_losers = sorted([(name, dat) for name, dat in all_losers.keys() if (dat[NINI_MESSAGES] >= 300 and dat[NINI_ERRORS] > 0)],
+    all_losers = sorted([(name, dat) for name, dat in all_losers.items() if (dat[NINI_MESSAGES] >= 300 and dat[NINI_ERRORS] > 0)],
                         key=lambda x: x[1][NINI_MESSAGES]/x[1][NINI_ERRORS], reverse=True)
     res = []
     res.append("`{} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12),
