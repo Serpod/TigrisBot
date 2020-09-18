@@ -184,7 +184,7 @@ async def nini(ctx):
 
     all_losers = sorted([(name, dat) for name, dat in all_losers.items() if (dat[NINI_MESSAGES] >= 300 and dat[NINI_ERRORS] > 0)],
                         key=lambda x: x[1][NINI_MESSAGES]/x[1][NINI_ERRORS], reverse=True)
-    res = []
+    res = ":drum::nini::drum:\n"
     res.append("`{} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12),
                                                       "Ratio".center(7), "streak".center(12), "streak max".center(12)))
     for username, dat in all_losers:
