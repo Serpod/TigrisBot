@@ -31,3 +31,10 @@ LAUGH_LIST =  ["*rires*", "*trololo*", "*rires enregistrés*", "*hin hin hin*", 
 LAUGHS_CATEGORIES = [] # Channel categories in which laughs work
 FIBREVILLE_CHANNEL_ID = 0 # Channel ID for the bouffon interaction (must be changed)
 BOUFFON_ROLES_ID = 0 # Role ID of the bouffon (must be changed)
+
+
+# NINI
+NINI_MESSAGES = 0
+NINI_ERRORS = 1
+NINI_STREAK = 2
+NINI_STREAK_MAX = 3

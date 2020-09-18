@@ -9,7 +9,7 @@ import re
 import marketplace
 import pickle
 from log import *
-from settings import *
+from settings_default import *
 
 
 # Code for the bot itself (parse commands)
@@ -156,38 +156,40 @@ async def nini(ctx):
         c += 1
         auth = m.author.name
         if auth not in all_losers:
-            all_losers[auth] = (0,0)
-        all_losers[auth] = (all_losers[auth][0] + 1, all_losers[auth][1])
+            all_losers[auth] = [0, 0, 0, 0]
+        all_losers[auth][NINI_MESSAGES] += 1
 
-        gyro = False
         react_lose = False
         losers = set()
         for reaction in m.reactions:
             if reaction.emoji == '🚨':
-                gyro = True
+                if not react_lose:
+                    losers.add(auth)
+                await m.add_reaction('🚨')
             if reaction.emoji == '👌':
                 react_lose = True
                 losers = set([l.name for l in await reaction.users().flatten()])
 
-        if gyro:
-            await m.add_reaction('🚨')
-            if not react_lose:
-                losers = set([auth])
+        for l in losers:
+            if l not in all_losers:
+                all_losers[l] = [0, 0, 0, 0]
+            all_losers[l][NINI_ERRORS] += 1
+            all_losers[l][NINI_STREAK] = 0
 
-            for l in losers:
-                if l not in all_losers:
-                    all_losers[l] = (0, 0)
-
-                all_losers[l] = (all_losers[l][0], all_losers[l][1] + 1)
+        all_losers[auth][NINI_STREAK] += 1
+        all_losers[auth][NINI_STREAK_MAX] = max(all_losers[auth][NINI_STREAK_MAX], all_losers[auth][NINI_STREAK])
 
     date = m.created_at
     pickle.dump([date, all_losers], open(filename, "wb"))
 
-    all_losers = sorted([(l, all_losers[l][0], all_losers[l][1]) for l in all_losers if (all_losers[l][0] >= 300 and all_losers[l][1] > 0)], key=lambda x: x[1]/x[2], reverse=True)
+    all_losers = sorted([(name, dat) for name, dat in all_losers.keys() if (dat[NINI_MESSAGES] >= 300 and dat[NINI_ERRORS] > 0)],
+                        key=lambda x: x[1][NINI_MESSAGES]/x[1][NINI_ERRORS], reverse=True)
     res = []
-    res.append("`{} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12), "Ratio".center(7)))
-    for username, n_m, n_l in all_losers:
-        res.append("`{} | {} | {} | {}`".format(username.center(20), str(n_l).center(12), str(n_m).center(12), int(n_m/n_l)))
+    res.append("`{} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12),
+                                                      "Ratio".center(7), "streak".center(12), "streak max".center(12)))
+    for username, dat in all_losers:
+        res.append("`{} | {} | {} | {} | {} | {}`".format(username.center(20), str(dat[NINI_MESSAGES]).center(12), str(dat[NINI_ERRORS]).center(12),
+                                                          str(int(dat[NINI_MESSAGES]/dat[NINI_ERRORS])).center(7), str(dat[NINI_STREAK]).center(12), str(dat[NINI_STREAK_MAX]).center(12)))
 
     log_info('\n'.join(res))
     await utils.send_msg(res, ctx)
