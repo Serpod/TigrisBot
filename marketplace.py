@@ -189,7 +189,7 @@ class Marketplace():
 
 
     def get_for_sale_items(self):
-        query_fetch = "SELECT {1}.name, {0}.item_id, {0}.price, {0}.seller_id, {0}.buyer_id FROM {0} JOIN {1} ON {0}.item_id = {1}.item_id".format(FOR_SALE_TABLE, ITEM_TABLE)
+        query_fetch = "SELECT {1}.name, {0}.item_id, {0}.price, {0}.seller_id, {0}.buyer_id FROM {0} JOIN {1} ON {0}.item_id = {1}.item_id ORDER BY {0}.price DESC".format(FOR_SALE_TABLE, ITEM_TABLE)
         cur = self.db.cursor()
         cur.execute(query_fetch)
         return cur.fetchall()

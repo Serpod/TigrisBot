@@ -268,14 +268,14 @@ class TigrisBank():
             log_error("(pay_salary) from_id {} doesn't exists".format(from_id))
             return 1
 
-        if from_b < salary:
+        if from_b < salary + 16000:
             log_error("(pay_salary) from_id {} hasn't got sufficient funds".format(from_id))
             return 3
 
 
         # Finally, pay salary
         log_info("(pay_salary) Paying salary ({}ŧ) to {}".format(salary/100, to_id))
-        return self.send(from_id, to_id, salary, "Salary")
+        return self.send(from_id, to_id, salary, "Salary") | self.send(from_id, to_id, 16000, "Basic income")
 
 
     def pay_all_salaries(self, from_id):

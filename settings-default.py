@@ -17,6 +17,8 @@ DEBUG = True
 
 TAX_RATE = 0.1 # Percentage of taxes on each transaction.
 TAX_TARGET = ADMIN[0]
+TAX_FREE_USERS = ADMIN # Users exempted from tax
+TAX_FREE_SERVER = [] # Servers exempted from tax
 
 # INVENTORY
 DB_NAME_MARKETPLACE = "./marketplace.db" # Name of the file containing the SQLite marketplace database
@@ -26,5 +28,6 @@ TRADE_TABLE = "trade" # Name of the table containing history of trades
 
 # BOUFFON
 LAUGH_LIST =  ["*rires*", "*trololo*", "*rires enregistrés*", "*hin hin hin*", "*ha. ha. ha.*", "*HueHueHue*", "*Haha*", "*Hahaha.*"]
+LAUGHS_CATEGORIES = [] # Channel categories in which laughs work
 FIBREVILLE_CHANNEL_ID = 0 # Channel ID for the bouffon interaction (must be changed)
 BOUFFON_ROLES_ID = 0 # Role ID of the bouffon (must be changed)

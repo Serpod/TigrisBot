@@ -1,11 +1,13 @@
 import discord
 from discord.ext import commands
+import os
 import traceback
 import random
 import tigris
 import utils
 import re
 import marketplace
+import pickle
 from log import *
 from settings import *
 
@@ -130,6 +132,66 @@ async def usage(ctx):
 
     dm = await ctx.author.create_dm()
     await utils.send_msg(msg, dm)
+
+
+@client.command()
+@commands.check(utils.is_admin)
+async def nini(ctx):
+    log_info("nini start")
+    message = ctx.message
+
+    filename = "./nini_history_" + ctx.message.channel.name
+    c = 0
+    if os.path.isfile(filename):
+        log_info("nini history file found")
+        history = pickle.load(open(filename, "rb"))
+        date = history[0]
+        all_losers = history[1] 
+    else:
+        log_error("nini history file not found")
+        all_losers = {}
+        date = None
+
+    async for m in message.channel.history(limit=None, after=date, oldest_first=True):
+        c += 1
+        auth = m.author.name
+        if auth not in all_losers:
+            all_losers[auth] = (0,0)
+        all_losers[auth] = (all_losers[auth][0] + 1, all_losers[auth][1])
+
+        gyro = False
+        react_lose = False
+        losers = set()
+        for reaction in m.reactions:
+            if reaction.emoji == '🚨':
+                gyro = True
+            if reaction.emoji == '👌':
+                react_lose = True
+                losers = set([l.name for l in await reaction.users().flatten()])
+
+        if gyro:
+            await m.add_reaction('🚨')
+            if not react_lose:
+                losers = set([auth])
+
+            for l in losers:
+                if l not in all_losers:
+                    all_losers[l] = (0, 0)
+
+                all_losers[l] = (all_losers[l][0], all_losers[l][1] + 1)
+
+    date = m.created_at
+    pickle.dump([date, all_losers], open(filename, "wb"))
+
+    all_losers = sorted([(l, all_losers[l][0], all_losers[l][1]) for l in all_losers if (all_losers[l][0] >= 300 and all_losers[l][1] > 0)], key=lambda x: x[1]/x[2], reverse=True)
+    res = []
+    res.append("`{} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12), "Ratio".center(7)))
+    for username, n_m, n_l in all_losers:
+        res.append("`{} | {} | {} | {}`".format(username.center(20), str(n_l).center(12), str(n_m).center(12), int(n_m/n_l)))
+
+    log_info('\n'.join(res))
+    await utils.send_msg(res, ctx)
+    log_info("nini command done! {} messages".format(c))
 
 @client.command()
 async def fillon(ctx):
@@ -849,7 +911,7 @@ async def get_jobs(ctx, user: discord.Member = None):
 async def get_jobs_error(ctx, error):
     log_error(error)
     if isinstance(error, commands.BadArgument):
-        await ctw.send(error)
+        await ctx.send(error)
     else:
         raise error
 
@@ -916,14 +978,14 @@ async def pay_salaries(ctx):
             break
 
         if v == 0:
-            res.append("Son salaire a été versé à {}.\n".format(utils.mention(user_id)))
+            res.append("Son salaire a été versé à {}.\n".format(get_name(user_id)))
             paid.append((user_id, salary))
             log_info(res[-1])
         elif v == 2:
-            error.append("Erreur : La salaire de {} est nul.".format(utils.mention(user_id)))
+            error.append("Erreur : La salaire de {} est nul.".format(get_name(user_id)))
             log_error(res[-1])
         elif v == 3:
-            error.append("Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(user_id)))
+            error.append("Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(from_id)))
             res.append(error[-1][1])
             log_error(res[-1])
             break
@@ -1011,7 +1073,10 @@ async def on_message(message):
     if message.author.id == client.user.id:
         return
 
-    if isinstance(message.author, discord.Member) and BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
+    if isinstance(message.author, discord.Member) and message.channel.category.id in LAUGHS_CATEGORIES and BOUFFON_ROLES_ID in [r.id for r in message.author.roles]:
+        if message.content.startswith('-'):
+            return
+        log_info("Send laugh")
         await message.channel.send(random.choice(LAUGH_LIST))
 
     if not utils.is_allowed(message.channel):
