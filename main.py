@@ -156,38 +156,40 @@ async def nini(ctx):
         c += 1
         auth = m.author.name
         if auth not in all_losers:
-            all_losers[auth] = (0,0)
-        all_losers[auth] = (all_losers[auth][0] + 1, all_losers[auth][1])
+            all_losers[auth] = dict()
+        all_losers[auth]["messages"] += 1
 
-        gyro = False
         react_lose = False
         losers = set()
         for reaction in m.reactions:
             if reaction.emoji == '🚨':
-                gyro = True
+                if not react_lose:
+                    losers.add(auth)
+                await m.add_reaction('🚨')
             if reaction.emoji == '👌':
                 react_lose = True
                 losers = set([l.name for l in await reaction.users().flatten()])
 
-        if gyro:
-            await m.add_reaction('🚨')
-            if not react_lose:
-                losers = set([auth])
+        for l in losers:
+            if l not in all_losers:
+                all_losers[l] = dict()
+            all_losers[l]["errors"] += 1
+            all_losers[l]["streak"] = 0
 
-            for l in losers:
-                if l not in all_losers:
-                    all_losers[l] = (0, 0)
-
-                all_losers[l] = (all_losers[l][0], all_losers[l][1] + 1)
+        all_losers[auth]["streak"] += 1
+        all_losers[auth]["streak_max"] = max(all_losers[auth]["streak_max"], all_losers[auth]["streak"])
 
     date = m.created_at
     pickle.dump([date, all_losers], open(filename, "wb"))
 
-    all_losers = sorted([(l, all_losers[l][0], all_losers[l][1]) for l in all_losers if (all_losers[l][0] >= 300 and all_losers[l][1] > 0)], key=lambda x: x[1]/x[2], reverse=True)
-    res = []
-    res.append("`{} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12), "Ratio".center(7)))
-    for username, n_m, n_l in all_losers:
-        res.append("`{} | {} | {} | {}`".format(username.center(20), str(n_l).center(12), str(n_m).center(12), int(n_m/n_l)))
+    all_losers = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
+                        key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
+    res = ":drum::nini::drum:\n"
+    res.append("`{} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12),
+                                                      "Ratio".center(7), "Streak".center(12), "Streak max".center(12)))
+    for username, data in all_losers:
+        res.append("`{} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
+                                                          str(int(data["messages"]/data["errors"])).center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12)))
 
     log_info('\n'.join(res))
     await utils.send_msg(res, ctx)
