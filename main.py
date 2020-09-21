@@ -157,7 +157,7 @@ async def nini(ctx):
         auth = m.author.name
         if auth not in all_losers:
             all_losers[auth] = dict()
-        all_losers[auth]["NINI_MESSAGES"] += 1
+        all_losers[auth]["messages"] += 1
 
         react_lose = False
         losers = set()
@@ -173,23 +173,23 @@ async def nini(ctx):
         for l in losers:
             if l not in all_losers:
                 all_losers[l] = dict()
-            all_losers[l]["NINI_ERRORS"] += 1
-            all_losers[l]["NINI_STREAK"] = 0
+            all_losers[l]["errors"] += 1
+            all_losers[l]["streak"] = 0
 
-        all_losers[auth]["NINI_STREAK"] += 1
-        all_losers[auth]["NINI_STREAK_MAX"] = max(all_losers[auth]["NINI_STREAK_MAX"], all_losers[auth]["NINI_STREAK"])
+        all_losers[auth]["streak"] += 1
+        all_losers[auth]["streak_max"] = max(all_losers[auth]["streak_max"], all_losers[auth]["streak"])
 
     date = m.created_at
     pickle.dump([date, all_losers], open(filename, "wb"))
 
-    all_losers = sorted([(name, data) for name, data in all_losers.items() if (data["NINI_MESSAGES"] >= 300 and data["NINI_ERRORS"] > 0)],
-                        key=lambda x: x[1]["NINI_MESSAGES"]/x[1]["NINI_ERRORS"], reverse=True)
+    all_losers = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
+                        key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
     res = ":drum::nini::drum:\n"
     res.append("`{} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12),
                                                       "Ratio".center(7), "Streak".center(12), "Streak max".center(12)))
     for username, data in all_losers:
-        res.append("`{} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["NINI_MESSAGES"]).center(12), str(data["NINI_ERRORS"]).center(12),
-                                                          str(int(data["NINI_MESSAGES"]/data["NINI_ERRORS"])).center(7), str(data["NINI_STREAK"]).center(12), str(data["NINI_STREAK_MAX"]).center(12)))
+        res.append("`{} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
+                                                          str(int(data["messages"]/data["errors"])).center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12)))
 
     log_info('\n'.join(res))
     await utils.send_msg(res, ctx)
