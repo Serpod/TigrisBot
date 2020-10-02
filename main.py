@@ -134,10 +134,14 @@ async def usage(ctx):
     await utils.send_msg(msg, dm)
 
 
-@client.command()
+@client.command(name='<:nini:696420822855843910>')
 @commands.check(utils.is_admin)
 async def nini(ctx):
+    #to_clear = await ctx.message.channel.fetch_message(754960110706622635)
+    #await to_clear.remove_reaction('🚨', ctx.message.channel.guild.get_member(client.user.id))
+    #return
     log_info("nini start")
+    await utils.send_msg(["Je commence à lire vos messages... :drum:"], ctx)
     message = ctx.message
 
     filename = "./nini_history_" + ctx.message.channel.name
@@ -156,7 +160,7 @@ async def nini(ctx):
         c += 1
         auth = m.author.name
         if auth not in all_losers:
-            all_losers[auth] = dict()
+            all_losers[auth] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0}
         all_losers[auth]["messages"] += 1
 
         react_lose = False
@@ -169,10 +173,11 @@ async def nini(ctx):
             if reaction.emoji == '👌':
                 react_lose = True
                 losers = set([l.name for l in await reaction.users().flatten()])
+                await m.add_reaction('🚨')
 
         for l in losers:
             if l not in all_losers:
-                all_losers[l] = dict()
+                all_losers[l] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0}
             all_losers[l]["errors"] += 1
             all_losers[l]["streak"] = 0
 
@@ -184,14 +189,15 @@ async def nini(ctx):
 
     all_losers = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
                         key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
-    res = ":drum::nini::drum:\n"
-    res.append("`{} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# défaites".center(12), "# messages".center(12),
+    res = ["Classement du <:nini:696420822855843910>"]
+    res.append("`**{}** | **{}** | **{}** | **{}** | **{}** | **{}**`".format("Pseudo".center(20), "# messages".center(12), "# défaites".center(12),
                                                       "Ratio".center(7), "Streak".center(12), "Streak max".center(12)))
     for username, data in all_losers:
         res.append("`{} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
                                                           str(int(data["messages"]/data["errors"])).center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12)))
 
     log_info('\n'.join(res))
+    res.append("J'ai lu {} messages !".format(c))
     await utils.send_msg(res, ctx)
     log_info("nini command done! {} messages".format(c))
 
@@ -980,11 +986,11 @@ async def pay_salaries(ctx):
             break
 
         if v == 0:
-            res.append("Son salaire a été versé à {}.\n".format(get_name(user_id)))
+            res.append("Son salaire a été versé à {}.\n".format(await get_name(user_id)))
             paid.append((user_id, salary))
             log_info(res[-1])
         elif v == 2:
-            error.append("Erreur : La salaire de {} est nul.".format(get_name(user_id)))
+            error.append("Erreur : La salaire de {} est nul.".format(await get_name(user_id)))
             log_error(res[-1])
         elif v == 3:
             error.append("Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(from_id)))
