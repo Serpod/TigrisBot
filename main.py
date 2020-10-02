@@ -196,7 +196,7 @@ async def nini(ctx):
 
     # WEEKLY RANKING UPDATE AND LOSER OF THE WEEK
 
-    # LOSER OF THE WEEK
+    # LOSER OF THE WEEK COMPUTE (BEFORE SORTING DICT)
     loss = {}
 
     for name in all_losers:
@@ -205,7 +205,7 @@ async def nini(ctx):
         else:
             loss[name] = all_losers[name]["errors"]-old_losers[name]["errors"]
 
-    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x:x[1], reverse=True)
+    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x: x[1], reverse=True)
 
     # RANKING UPDATE
     old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
@@ -216,7 +216,7 @@ async def nini(ctx):
         old_ranking[name] = rank
 
     all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
-                        key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
+                                key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
 
     for new_rank, name, data in enumerate(all_losers_sorted):
         if name not in old_ranking:
@@ -243,8 +243,8 @@ async def nini(ctx):
 
     log_info('\n'.join(res))
 
-    # LOSER MESSAGE (C'est plus humain de punir deux personnes non ?) AND ROLES
 
+    # LOSER MESSAGE AND ROLES
 
     nLoser = max(NUMBER_OF_LOSER, len(loss_ranking))
     loss_ranking = loss_ranking[:nLoser]
@@ -267,7 +267,6 @@ async def nini(ctx):
 
     res.append(loseMsg)
 
-
     # REMOVE ALL CURRENT LOSERS
     role = get(ctx.guild.roles, name=LOSER_ROLE_NAME)
 
@@ -275,14 +274,13 @@ async def nini(ctx):
         if role in member.roles:
             await member.remove_roles(role)
 
-
     for name, r in loss_ranking:
         if name in all_losers and "id" in all_losers[name]:
             member = ctx.guild.get_member(all_losers[name]["id"])
             await member.add_roles(role)
             log_info("Loser role added to {}.".format(name))
 
-
+    # SEND MESSAGE
     res.append("J'ai lu {} messages !".format(message_count))
     await utils.send_msg(res, ctx)
     log_info("nini command done! {} messages".format(message_count))
