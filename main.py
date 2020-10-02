@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.utils import get
 import os
 import traceback
 import random
@@ -144,23 +145,27 @@ async def nini(ctx):
     await utils.send_msg(["Je commence à lire vos messages... :drum:"], ctx)
     message = ctx.message
 
-    filename = "./nini_history_" + ctx.message.channel.name
-    c = 0
+    filename = NINI_SAVE_FILE_PREFIX + ctx.message.channel.name
+    message_count = 0
     if os.path.isfile(filename):
         log_info("nini history file found")
         history = pickle.load(open(filename, "rb"))
         date = history[0]
-        all_losers = history[1] 
+        all_losers = history[1]
     else:
         log_error("nini history file not found")
         all_losers = {}
         date = None
 
+    old_losers = all_losers.copy()
+
     async for m in message.channel.history(limit=None, after=date, oldest_first=True):
-        c += 1
+        message_count += 1
         auth = m.author.name
         if auth not in all_losers:
-            all_losers[auth] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0}
+            all_losers[auth] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "id": m.author.id}
+        if "id" not in all_losers[auth]:
+            all_losers[auth]["id"] = m.author.id            # NEED ID TO SET LOSER OF THE WEEK SO WE ADD TO ALREADY EXISTING MEMBERS (RETRO COMPATIBILITY)
         all_losers[auth]["messages"] += 1
 
         react_lose = False
@@ -168,38 +173,119 @@ async def nini(ctx):
         for reaction in m.reactions:
             if reaction.emoji == '🚨':
                 if not react_lose:
-                    losers.add(auth)
+                    losers.add((auth, m.author.id))
                 await m.add_reaction('🚨')
             if reaction.emoji == '👌':
                 react_lose = True
-                losers = set([l.name for l in await reaction.users().flatten()])
+                losers = set([(l.name, l.id) for l in await reaction.users().flatten()])
                 await m.add_reaction('🚨')
 
-        for l in losers:
+        for l, id in losers:
             if l not in all_losers:
-                all_losers[l] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0}
+                all_losers[l] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "id": id}
             all_losers[l]["errors"] += 1
-            all_losers[l]["streak"] = 0
+            all_losers[l]["streak"] = -1                    # SO THE ERROR MESSAGE DOES NOT COUNT SA STREAK ANYMORE
 
         all_losers[auth]["streak"] += 1
         all_losers[auth]["streak_max"] = max(all_losers[auth]["streak_max"], all_losers[auth]["streak"])
 
+    # SAVE DATA AS PICKLE
+
     date = m.created_at
     pickle.dump([date, all_losers], open(filename, "wb"))
 
-    all_losers = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
+    # WEEKLY RANKING UPDATE AND LOSER OF THE WEEK
+
+    # LOSER OF THE WEEK
+    loss = {}
+
+    for name in all_losers:
+        if name not in old_losers:
+            loss[name] = all_losers[name]["errors"]
+        else:
+            loss[name] = all_losers[name]["errors"]-old_losers[name]["errors"]
+
+    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x:x[1], reverse=True)
+
+    # RANKING UPDATE
+    old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
                         key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
+
+    old_ranking = {}
+    for rank, name, data in enumerate(old_losers):
+        old_ranking[name] = rank
+
+    all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
+                        key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
+
+    for new_rank, name, data in enumerate(all_losers_sorted):
+        if name not in old_ranking:
+            old_rank = len(old_ranking)
+        else:
+            old_rank = old_ranking[name]
+        update = old_rank-new_rank
+        if update > 0:
+            update = "🔼"+str(update)
+        elif update < 0:
+            update = "🔽"+str(-update)
+        else:
+            update = "🟦0"
+        data["rank_update"] = update
+
+    # RANKING MESSAGE
     res = ["Classement du <:nini:696420822855843910>"]
-    res.append("`**{}** | **{}** | **{}** | **{}** | **{}** | **{}**`".format("Pseudo".center(20), "# messages".center(12), "# défaites".center(12),
-                                                      "Ratio".center(7), "Streak".center(12), "Streak max".center(12)))
-    for username, data in all_losers:
-        res.append("`{} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
-                                                          str(int(data["messages"]/data["errors"])).center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12)))
+    res.append("`**{}** | **{}** | **{}** | **{}** | **{}** | **{}** | **{}**`".format("Pseudo".center(20), "# messages".center(12), "# défaites".center(12),
+                                                      "Ratio".center(7), "Streak".center(12), "Streak max".center(12), "Évolution".center(12)))
+
+    for username, data in all_losers_sorted:
+        res.append("`{} | {} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
+                                                          str(int(data["messages"]/data["errors"])).center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12), data["rank_update"].center(12)))
 
     log_info('\n'.join(res))
-    res.append("J'ai lu {} messages !".format(c))
+
+    # LOSER MESSAGE (C'est plus humain de punir deux personnes non ?) AND ROLES
+
+
+    nLoser = max(NUMBER_OF_LOSER, len(loss_ranking))
+    loss_ranking = loss_ranking[:nLoser]
+
+    if nLoser == 0:
+        loseMsg = "Il n'y à pas de grand loooooser.euse cette semaine."
+    elif nLoser == 1:
+        loseMsg = "Le grand loooooser.euse de cette semaine est "
+    else:
+        loseMsg = "Les {} grands loooooser.euses de cette semaine sont ".format(nLoser)
+
+    for n, l in enumerate(loss_ranking):
+        loseMsg += l[0] + " ({})".format(l[1])
+        if n < nLoser-2:
+            loseMsg += ", "
+        elif n < nLoser-1:
+            loseMsg += " et "
+        else:
+            loseMsg += "."
+
+    res.append(loseMsg)
+
+
+    # REMOVE ALL CURRENT LOSERS
+    role = get(ctx.guild.roles, name=LOSER_ROLE_NAME)
+
+    for member in ctx.guild.members:
+        if role in member.roles:
+            await member.remove_roles(role)
+
+
+    for name, r in loss_ranking:
+        if name in all_losers and "id" in all_losers[name]:
+            member = ctx.guild.get_member(all_losers[name]["id"])
+            await member.add_roles(role)
+            log_info("Loser role added to {}.".format(name))
+
+
+    res.append("J'ai lu {} messages !".format(message_count))
     await utils.send_msg(res, ctx)
-    log_info("nini command done! {} messages".format(c))
+    log_info("nini command done! {} messages".format(message_count))
 
 @client.command()
 async def fillon(ctx):
@@ -608,7 +694,7 @@ async def new_account_error(ctx, error):
     else:
         raise error
 
-    
+
 @client.command(name="balance", ignore_extra=True)
 async def get_balance(ctx):
     user_id = ctx.author.id
