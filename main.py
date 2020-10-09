@@ -203,7 +203,9 @@ async def nini(ctx):
         if name not in old_losers:
             loss[name] = all_losers[name]["errors"]
         else:
-            loss[name] = all_losers[name]["errors"]-old_losers[name]["errors"]
+            nLoss = all_losers[name]["errors"]-old_losers[name]["errors"]
+            if nLoss > 0:
+                loss[name] = nLoss
 
     loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x: x[1], reverse=True)
 
@@ -246,7 +248,7 @@ async def nini(ctx):
 
     # LOSER MESSAGE AND ROLES
 
-    nLoser = max(NUMBER_OF_LOSER, len(loss_ranking))
+    nLoser = min(NUMBER_OF_LOSER, len(loss_ranking))
     loss_ranking = loss_ranking[:nLoser]
 
     if nLoser == 0:
