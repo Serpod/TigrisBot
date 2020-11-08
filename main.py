@@ -175,7 +175,7 @@ async def nini(ctx):
                 if not react_lose:
                     losers.add((auth, m.author.id))
                 await m.add_reaction('🚨')
-            if reaction.emoji == '👌':
+            if reaction.emoji in ['👌', '🙉', '🙊', '🙈'] :
                 react_lose = True
                 losers = set([(l.name, l.id) for l in await reaction.users().flatten()])
                 await m.add_reaction('🚨')
@@ -184,7 +184,7 @@ async def nini(ctx):
             if l not in all_losers:
                 all_losers[l] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "id": id}
             all_losers[l]["errors"] += 1
-            all_losers[l]["streak"] = -1                    # SO THE ERROR MESSAGE DOES NOT COUNT SA STREAK ANYMORE
+            all_losers[l]["streak"] = -1                    # SO THE ERROR MESSAGE DOES NOT COUNT THEIR STREAK ANYMORE
 
         all_losers[auth]["streak"] += 1
         all_losers[auth]["streak_max"] = max(all_losers[auth]["streak_max"], all_losers[auth]["streak"])
@@ -194,20 +194,20 @@ async def nini(ctx):
     date = m.created_at
     pickle.dump([date, all_losers], open(filename, "wb"))
 
-    # WEEKLY RANKING UPDATE AND LOSER OF THE WEEK
+    # WEEKLY RANKING UPDATE AND LOSERS OF THE WEEK
 
-    # LOSER OF THE WEEK COMPUTE (BEFORE SORTING DICT)
+    # LOSERS OF THE WEEK COMPUTE (BEFORE SORTING DICT)
     loss = {}
 
     for name in all_losers:
         if name not in old_losers:
             loss[name] = all_losers[name]["errors"]
         else:
-            nLoss = all_losers[name]["errors"]-old_losers[name]["errors"]
+            nLoss = all_losers[name]["errors"] - old_losers[name]["errors"]
             if nLoss > 0:
                 loss[name] = nLoss
 
-    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x: x[1], reverse=True)
+    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key = lambda x: x[1], reverse=True)
 
     # RANKING UPDATE
     old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
@@ -218,7 +218,7 @@ async def nini(ctx):
         old_ranking[name] = rank
 
     all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
-                                key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
+                                key=lambda x: x[1]["messages"] / x[1]["errors"], reverse=True)
 
     for new_rank, name, data in enumerate(all_losers_sorted):
         if name not in old_ranking:
@@ -252,11 +252,11 @@ async def nini(ctx):
     loss_ranking = loss_ranking[:nLoser]
 
     if nLoser == 0:
-        loseMsg = "Il n'y à pas de grand loooooser.euse cette semaine."
+        loseMsg = "Il n'y a pas de grand loooooser.euse cette semaine."
     elif nLoser == 1:
-        loseMsg = "Le grand loooooser.euse de cette semaine est "
+        loseMsg = "Le.a grand.e loooooser.euse de cette semaine est "
     else:
-        loseMsg = "Les {} grands loooooser.euses de cette semaine sont ".format(nLoser)
+        loseMsg = "Les {} grand.e.s loooooser.euse.s de cette semaine sont ".format(nLoser)
 
     for n, l in enumerate(loss_ranking):
         loseMsg += l[0] + " ({})".format(l[1])
@@ -334,7 +334,7 @@ async def get_citizens(ctx):
         await dm.send("La ville est déserte.")
         return
 
-    res.append("Liste des citoyens de Fibreville :")
+    res.append("Liste des citoyen.ne.s de Fibreville :")
     for citizen in citizens:
         res.append("{} : {}".format(await get_name(citizen[0]), utils.mention(citizen[0])))
     await utils.send_msg(res, dm)
@@ -952,7 +952,7 @@ async def del_job(ctx, user: discord.Member, job_id: int):
 
     job = bank.remove_job(user_id, job_id)
     if job is None:
-        res = "Erreur : Le métier pour le citoyen ({}) ayant pour identifiant {} n'existe pas".format(utils.mention(user_id), job_id)
+        res = "Erreur : Le métier pour le.a citoyen.ne ({}) ayant pour identifiant {} n'existe pas".format(utils.mention(user_id), job_id)
         log_error(res)
         return res
 
@@ -1048,7 +1048,7 @@ async def get_salary_error(ctx, error):
     if isinstance(error, commands.BadArgument):
         await ctx.send(error)
     elif isinstance(error, commands.TooManyArguments):
-        res = "Erreur : Mauvais nombre de paramètre.\n"
+        res = "Erreur : Mauvais nombre de paramètres.\n"
         res += ".salary (classique)\n"
         res += ".salary [<user>] (privilégié)"
         await ctx.send(res)
