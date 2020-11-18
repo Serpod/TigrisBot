@@ -175,7 +175,7 @@ async def nini(ctx):
                 if not react_lose:
                     losers.add((auth, m.author.id))
                 await m.add_reaction('🚨')
-            if reaction.emoji in ['👌', '🙉', '🙊', '🙈'] :
+            if reaction.emoji in ['👌', '🙉', '🙊', '🙈', '🚳', '🚷', '⛔', '🚭', '📵', '🚯', '🔕', '🆗', '🙆', '🙅', '😶'] :
                 react_lose = True
                 losers = set([(l.name, l.id) for l in await reaction.users().flatten()])
                 await m.add_reaction('🚨')
