@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.utils import get
+from copy import deepcopy
 import os
 import traceback
 import random
@@ -14,8 +15,9 @@ from settings import *
 
 
 # Code for the bot itself (parse commands)
-
-client = commands.Bot(command_prefix='.')
+intents = discord.Intents.default()
+intents.members = True
+client = commands.Bot(command_prefix='.', intents=intents)
 client.help_command = None
 bank = tigris.TigrisBank()
 marketplace = marketplace.Marketplace()
@@ -157,7 +159,7 @@ async def nini(ctx):
         all_losers = {}
         date = None
 
-    old_losers = all_losers.copy()
+    old_losers = deepcopy(all_losers)
 
     async for m in message.channel.history(limit=None, after=date, oldest_first=True):
         message_count += 1
@@ -214,13 +216,13 @@ async def nini(ctx):
                         key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
 
     old_ranking = {}
-    for rank, name, data in enumerate(old_losers):
+    for rank, (name, data) in enumerate(old_losers):
         old_ranking[name] = rank
 
     all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
                                 key=lambda x: x[1]["messages"] / x[1]["errors"], reverse=True)
 
-    for new_rank, name, data in enumerate(all_losers_sorted):
+    for new_rank, (name, data) in enumerate(all_losers_sorted):
         if name not in old_ranking:
             old_rank = len(old_ranking)
         else:
@@ -236,7 +238,7 @@ async def nini(ctx):
 
     # RANKING MESSAGE
     res = ["Classement du <:nini:696420822855843910>"]
-    res.append("`**{}** | **{}** | **{}** | **{}** | **{}** | **{}** | **{}**`".format("Pseudo".center(20), "# messages".center(12), "# défaites".center(12),
+    res.append("`{} | {} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# messages".center(12), "# défaites".center(12),
                                                       "Ratio".center(7), "Streak".center(12), "Streak max".center(12), "Évolution".center(12)))
 
     for username, data in all_losers_sorted:
@@ -278,9 +280,12 @@ async def nini(ctx):
 
     for name, r in loss_ranking:
         if name in all_losers and "id" in all_losers[name]:
-            member = ctx.guild.get_member(all_losers[name]["id"])
-            await member.add_roles(role)
-            log_info("Loser role added to {}.".format(name))
+            try:
+                member = ctx.guild.get_member(all_losers[name]["id"])
+                await member.add_roles(role)
+                log_info("Loser role added to {}.".format(name))
+            except:
+                continue
 
     # SEND MESSAGE
     res.append("J'ai lu {} messages !".format(message_count))
