@@ -207,7 +207,7 @@ async def nini(ctx):
             if nLoss > 0:
                 loss[name] = nLoss
 
-    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key = lambda x: x[1], reverse=True)
+    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x: x[1], reverse=True)
 
     # RANKING UPDATE
     old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
