@@ -136,18 +136,51 @@ async def usage(ctx):
     dm = await ctx.author.create_dm()
     await utils.send_msg(msg, dm)
 
+@client.command()
+@commands.check(utils.is_admin)
+async def add_loser(ctx, user_id):
+    member = ctx.guild.get_member(int(user_id))
+    role = get(ctx.guild.roles, name=LOSER_ROLE_NAME)
+    await member.add_roles(role)
+    msg = "Role {} added to {}".format(LOSER_ROLE_NAME, member.display_name)
+    log_info(msg)
+    await utils.send_msg([msg], ctx)
+
+@client.command()
+@commands.check(utils.is_admin)
+async def rm_loser(ctx, user_id):
+    member = ctx.guild.get_member(int(user_id))
+    role = get(ctx.guild.roles, name=LOSER_ROLE_NAME)
+    await member.remove_roles(role)
+    msg = "Role {} removed from {}".format(LOSER_ROLE_NAME, member.display_name)
+    log_info(msg)
+    await utils.send_msg([msg], ctx)
+
 
 @client.command(name='<:nini:696420822855843910>')
 @commands.check(utils.is_admin)
 async def nini(ctx):
+    scoreboard(ctx)
+
+@client.command(name='S2<:nini:696420822855843910>')
+async def niniS2(ctx):
+    scoreboard(ctx, NINI_SAVE_FILE_PREFIX + "nini_saison2", "Ceci est le classement de la Saison 2 du NiNi, qui a commencée le 1er Février 2021 à 0h00 !")
+
+async def scoreboard(ctx, histfile=None, preamble=None):
     #to_clear = await ctx.message.channel.fetch_message(754960110706622635)
     #await to_clear.remove_reaction('🚨', ctx.message.channel.guild.get_member(client.user.id))
     #return
     log_info("nini start")
+    if preamble is not None:
+        await utils.send_msg([preamble], ctx)
     await utils.send_msg(["Je commence à lire vos messages... :drum:"], ctx)
     message = ctx.message
 
-    filename = NINI_SAVE_FILE_PREFIX + ctx.message.channel.name
+    if histfile is not None:
+        filename = histfile
+    else:
+        filename = NINI_SAVE_FILE_PREFIX + ctx.message.channel.name
+
     message_count = 0
     if os.path.isfile(filename):
         log_info("nini history file found")
