@@ -160,11 +160,11 @@ async def rm_loser(ctx, user_id):
 @client.command(name='<:nini:696420822855843910>')
 @commands.check(utils.is_admin)
 async def nini(ctx):
-    scoreboard(ctx)
+    await scoreboard(ctx)
 
 @client.command(name='S2<:nini:696420822855843910>')
 async def niniS2(ctx):
-    scoreboard(ctx, NINI_SAVE_FILE_PREFIX + "nini_saison2", "Ceci est le classement de la Saison 2 du NiNi, qui a commencée le 1er Février 2021 à 0h00 !")
+    await scoreboard(ctx, NINI_SAVE_FILE_PREFIX + "nini_saison2", "Ceci est le classement de la Saison 2 du NiNi, qui a commencée le 1er Février 2021 à 0h00 !")
 
 async def scoreboard(ctx, histfile=None, preamble=None):
     #to_clear = await ctx.message.channel.fetch_message(754960110706622635)
