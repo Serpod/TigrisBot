@@ -246,7 +246,7 @@ async def scoreboard(ctx, histfile=None, preamble=None):
 
     # RANKING UPDATE
     old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
-                        key=lambda x: x[1]["messages"]/x[1]["errors"], reverse=True)
+                        key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else float("inf"), reverse=True)
 
     old_ranking = {}
     for rank, (name, data) in enumerate(old_losers):
