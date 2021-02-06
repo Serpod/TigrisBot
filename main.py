@@ -276,7 +276,7 @@ async def scoreboard(ctx, histfile=None, preamble=None):
 
     for username, data in all_losers_sorted:
         res.append("`{} | {} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
-                                                          str(int(data["messages"]/data["errors"])).center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12), data["rank_update"].center(12)))
+                                                          str(int(data["messages"]/data["errors"]) if data["errors"] != 0 else "∞").center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12), data["rank_update"].center(12)))
 
     log_info('\n'.join(res))
 
