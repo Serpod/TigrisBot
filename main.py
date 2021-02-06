@@ -245,15 +245,15 @@ async def scoreboard(ctx, histfile=None, preamble=None):
     loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x: x[1], reverse=True)
 
     # RANKING UPDATE
-    old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
+    old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300)],
                         key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else float("inf"), reverse=True)
 
     old_ranking = {}
     for rank, (name, data) in enumerate(old_losers):
         old_ranking[name] = rank
 
-    all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300 and data["errors"] > 0)],
-                                key=lambda x: x[1]["messages"] / x[1]["errors"], reverse=True)
+    all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300)],
+                                key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else float("inf"), reverse=True)
 
     for new_rank, (name, data) in enumerate(all_losers_sorted):
         if name not in old_ranking:
