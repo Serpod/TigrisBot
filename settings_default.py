@@ -28,6 +28,8 @@ TRADE_TABLE = "trade"   # Name of the table containing history of trades
 
 # PRESIDENT
 PRESIDENT_ROLES_ID = 0 # Role id of president
+FIBRE_ID = 260861701279318019 #Id of user FibreTigre. The information is public
+BR_CHANNEL_ID = 0 # Channel ID for the Battle Royale des Votes
 
 # BOUFFON
 LAUGH_LIST = ["*rires*", "*trololo*", "*rires enregistrés*", "*hin hin hin*", "*ha. ha. ha.*", "*HueHueHue*", "*Haha*", "*Hahaha.*"]
