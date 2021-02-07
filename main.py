@@ -327,15 +327,24 @@ async def scoreboard(ctx, histfile=None, preamble=None):
     
 @client.command(name='clap')
 async def clap(ctx):
-    if PRESIDENT_ROLES_ID in [r.id for r in ctx.author.roles]:
-        msg = ":clap::clap::clap:"
-        for i in range(2):
+    if ctx.channel.id == BR_CHANNEL_ID:
+        if PRESIDENT_ROLES_ID in [r.id for r in ctx.author.roles]:
+            msg = ":clap::clap::clap:"
+            for i in range(2):
+                await utils.send_msg(msg, ctx)
+        elif ctx.author.id == FIBRE_ID:
+            msg = "MDR, Fais toi élire comme tout le monde.\n Le Roy n'est pas au dessus de tout"
             await utils.send_msg(msg, ctx)
-            
+        else:
+            msg = "MDR, T KI ?"
+            await utils.send_msg(msg, ctx)
+
+                    
 @client.command(name=':clap:')
 async def clap_emote(ctx):
     await clap(ctx)
-   
+
+    
 @client.command()
 async def fillon(ctx):
     transacs = bank.get_history(ADMIN[0])
