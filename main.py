@@ -327,7 +327,7 @@ async def scoreboard(ctx, histfile=None, preamble=None):
     
 @client.command(name='clap')
 async def clap(ctx):
-    if PRESIDENT_ROLES_ID in [r.id for r in message.author.roles]:
+    if PRESIDENT_ROLES_ID in [r.id for r in ctx.author.roles]:
         msg = ":clap::clap::clap:"
         for i in range(2):
             await utils.send_msg(msg, ctx)
