@@ -26,6 +26,10 @@ ITEM_TABLE = "item"     # Name of the table containing the items
 FOR_SALE_TABLE = "for_sale"     # Name of the table containing items to be sold
 TRADE_TABLE = "trade"   # Name of the table containing history of trades
 
+# PRESIDENT
+PRESIDENT_ROLES_ID = 0 # Role id of president
+BR_CHANNEL_ID = 0 # Channel ID for the Battle Royale des Votes
+
 # BOUFFON
 LAUGH_LIST = ["*rires*", "*trololo*", "*rires enregistrés*", "*hin hin hin*", "*ha. ha. ha.*", "*HueHueHue*", "*Haha*", "*Hahaha.*"]
 LAUGHS_CATEGORIES = []  # Channel categories in which laughs work
