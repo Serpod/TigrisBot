@@ -324,7 +324,7 @@ async def scoreboard(ctx, histfile=None, preamble=None):
     res.append("J'ai lu {} messages !".format(message_count))
     await utils.send_msg(res, ctx)
     log_info("nini command done! {} messages".format(message_count))
-    
+
 @client.command(name='clap')
 async def clap(ctx):
     if ctx.channel.id == BR_CHANNEL_ID:
@@ -339,12 +339,12 @@ async def clap(ctx):
             msg = "MDR, T KI ?"
             await utils.send_msg(msg, ctx)
 
-                    
+
 @client.command(name='👏')
 async def clap_emote(ctx):
     await clap(ctx)
 
-    
+
 @client.command()
 async def fillon(ctx):
     transacs = bank.get_history(ADMIN[0])
