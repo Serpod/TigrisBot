@@ -329,10 +329,10 @@ async def scoreboard(ctx, histfile=None, preamble=None):
 async def clap(ctx):
     if ctx.channel.id == BR_CHANNEL_ID:
         if PRESIDENT_ROLES_ID in [r.id for r in ctx.author.roles]:
-            msg = ":clap::clap::clap:"
+            msg = "👏👏👏"
             for i in range(2):
                 await utils.send_msg(msg, ctx)
-        elif ctx.author.id == FIBRE_ID:
+        elif ctx.author.id == ctx.guild.owner.id:
             msg = "MDR, Fais toi élire comme tout le monde.\n Le Roy n'est pas au dessus de tout"
             await utils.send_msg(msg, ctx)
         else:
@@ -340,7 +340,7 @@ async def clap(ctx):
             await utils.send_msg(msg, ctx)
 
                     
-@client.command(name=':clap:')
+@client.command(name='👏')
 async def clap_emote(ctx):
     await clap(ctx)
 
