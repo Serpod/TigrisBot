@@ -6,6 +6,7 @@ import os
 import traceback
 import random
 import tigris
+import jobs
 import utils
 import re
 import marketplace
@@ -20,6 +21,7 @@ intents.members = True
 client = commands.Bot(command_prefix='.', intents=intents)
 client.help_command = None
 bank = tigris.TigrisBank()
+jobs_mgr = jobs.JobsManager()
 marketplace = marketplace.Marketplace()
 
 @client.command(name="help")
@@ -32,8 +34,8 @@ async def usage(ctx):
     usage += "\t\tAffiche ce message.\n"
     msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .new_account [<user>]\n"
-    usage += "\t\tCrée un compte en banque pour l'utilisateur.rice renseigné.e (s'il y a lieu) ou pour l'expéditeur.ice du message.\n"
+    usage = "\t* .new_account\n"
+    usage += "\t\tCrée un compte en banque pour l'expéditeur.ice du message.\n"
     usage += "\t\t(Ne fonctionne que si le compte n'existe pas déjà.)\n"
     msg.append(utils.surround_markdown(usage))
 
@@ -41,7 +43,7 @@ async def usage(ctx):
     usage += "\t\tVous transmet par message privé votre solde.\n"
     msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .send <to> <amount> [<message>]\n"
+    usage = "\t* .send_tigris <to> <amount> [<message>]\n"
     usage += "\t\tSi vous avez les fonds nécéssaires, envoie <amount> tigris à l'utilisateur.ice <to>.\n"
     usage += "\t\tUn message (facultatif) <message> peut être renseigné.\n"
     msg.append(utils.surround_markdown(usage))
@@ -55,82 +57,85 @@ async def usage(ctx):
     msg.append(utils.surround_markdown(usage))
 
     usage = "\t* .all_jobs\n"
-    usage += "\t\tAffiche tous les métiers des citoyens du royaume.\n"
+    usage += "\t\tAffiche tous les métiers de tout le monde.\n"
     msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .salary\n"
-    usage += "\t\tAffiche votre salaire.\n"
+    usage = "\t* .step\n"
+    usage += "\t\tAffiche votre palier de revenu.\n"
     msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .monthly_taxes [YYYY-MM]\n"
-    usage += "\t\tAffiche la somme des taxes récoltées pour ce mois-ci ou pour le mois renseigné en suivant le format YYYY-MM (par exemple pour Juin 2020 : 2020-06).\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .monthly_taxes [YYYY-MM]\n"
+    #usage += "\t\tAffiche la somme des taxes récoltées pour ce mois-ci ou pour le mois renseigné en suivant le format YYYY-MM (par exemple pour Juin 2020 : 2020-06).\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .inventory\n"
-    usage += "\t\tVous transmet votre inventaire.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .inventory\n"
+    #usage += "\t\tVous transmet votre inventaire.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .create <name> [<description>]\n"
-    usage += "\t\tCrée un objet (si vous n'en avez pas déjà créé aujourd'hui).\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .create <name> [<description>]\n"
+    #usage += "\t\tCrée un objet (si vous n'en avez pas déjà créé aujourd'hui).\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .delete <item_id>\n"
-    usage += "\t\tSupprime l'objet n°<item_id>. Vous devez en être le propriétaire.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .delete <item_id>\n"
+    #usage += "\t\tSupprime l'objet n°<item_id>. Vous devez en être le propriétaire.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .trades\n"
-    usage += "\t\tVous transmet l'historique des ventes et échanges publics.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .trades\n"
+    #usage += "\t\tVous transmet l'historique des ventes et échanges publics.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .give <user> <item_id>\n"
-    usage += "\t\tDonne l'objet <item_id> à <user>.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .give <user> <item_id>\n"
+    #usage += "\t\tDonne l'objet <item_id> à <user>.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .for_sale\n"
-    usage += "\t\tAffiche les objets en vente.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .for_sale\n"
+    #usage += "\t\tAffiche les objets en vente.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .sell <item_id> <price> [<user>]\n"
-    usage += "\t\tMet en vente l'objet <item_id> au prix de <price>ŧ.\n"
-    usage += "\t\tOptionnellement, seul <user> peut acheter cet objet.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .sell <item_id> <price> [<user>]\n"
+    #usage += "\t\tMet en vente l'objet <item_id> au prix de <price>ŧ.\n"
+    #usage += "\t\tOptionnellement, seul <user> peut acheter cet objet.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .cancel_sale <item_id>\n"
-    usage += "\t\tRetire l'objet <item_id> de la vente.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .cancel_sale <item_id>\n"
+    #usage += "\t\tRetire l'objet <item_id> de la vente.\n"
+    #msg.append(utils.surround_markdown(usage))
 
-    usage = "\t* .buy <item_id>\n"
-    usage += "\t\tAchète l'objet <item_id>.\n"
-    msg.append(utils.surround_markdown(usage))
+    #usage = "\t* .buy <item_id>\n"
+    #usage += "\t\tAchète l'objet <item_id>.\n"
+    #msg.append(utils.surround_markdown(usage))
+
     if ctx.author.id in ADMIN:
-        usage = "## Commandes spéciales (pour notre bon Roy et certains privilégiés) :\n"
         usage += "\t* .all_balance\n"
         usage += "\t\tVous transmet par message privé l'état de tous les comptes en banque.\n"
         msg.append(utils.surround_markdown(usage))
 
         usage = "\t* .all_jobs\n"
-        usage += "\t\tTransmet, en privé, tous les métiers des citoyens du royaume, avec le salaire associé.\n"
+        usage += "\t\tTransmet, en privé, tous les métiers de tout le monde.\n"
         msg.append(utils.surround_markdown(usage))
 
-        usage = "\t* .new_job <user> <salary> <title>\n"
-        usage += "\t\tAjoute un nouveau métier à <user>. Il devient <title> et est payé <salary>.\n"
+        usage = "\t* .new_job <user> <title>\n"
+        usage += "\t\tAjoute un nouveau métier à <user>. Iel devient <title> et est payé.e au palier <step>.\n"
         msg.append(utils.surround_markdown(usage))
 
         usage = "\t* .del_job <user> <job_id>\n"
         usage += "\t\tSupprime le métier <job_id> de <user>.\n"
         msg.append(utils.surround_markdown(usage))
 
-        usage = "\t* .salary [<user>]\n"
+        usage = "\t* .step [<user>]\n"
         usage += "\t\tVous transmet votre salaire ou celui de <user>.\n"
         msg.append(utils.surround_markdown(usage))
 
-        usage = "\t* .all_salaries\n"
-        usage += "\t\tVous transmet les salaires de tous les citoyens.\n"
+        usage = "\t* .set_step <user> <step>\n"
+        usage += "\t\tFixe le palier de revenu de <user> a <step>.\n"
         msg.append(utils.surround_markdown(usage))
 
-        usage = "\t* .pay_salaries\n"
-        usage += "\t\tDéclenche la paye des salaires à tous les citoyens.\n"
-        usage += "\t\t(À utiliser avec précaution, commande très peu testée)\n"
+        usage = "\t* .all_steps\n"
+        usage += "\t\tVous transmet la liste des paliers de tout le monde.\n"
+        msg.append(utils.surround_markdown(usage))
+
+        usage = "\t* .payroll\n"
+        usage += "\t\tDéclenche le versement des revenus de tout le monde.\n"
         msg.append(utils.surround_markdown(usage))
 
     dm = await ctx.author.create_dm()
@@ -163,6 +168,7 @@ async def nini(ctx):
     await scoreboard(ctx)
 
 @client.command(name='S2<:nini:696420822855843910>')
+@commands.check(utils.is_admin)
 async def niniS2(ctx):
     await scoreboard(ctx, NINI_SAVE_FILE_PREFIX + "nini_saison2", "Ceci est le classement de la Saison 2 du NiNi, qui a commencée le 1er Février 2021 à 0h00 !")
 
@@ -331,12 +337,12 @@ async def clap(ctx):
         if PRESIDENT_ROLES_ID in [r.id for r in ctx.author.roles]:
             msg = "👏👏👏"
             for i in range(2):
-                await utils.send_msg(msg, ctx)
+                await utils.send_msg([msg], ctx)
         elif ctx.author.id == ctx.guild.owner.id:
-            msg = "MDR, Fais toi élire comme tout le monde.\n Le Roy n'est pas au dessus de tout"
+            msg = ["MDR, Fais toi élire comme tout le monde.\n Le Roy n'est pas au dessus de tout"]
             await utils.send_msg(msg, ctx)
         else:
-            msg = "MDR, T KI ?"
+            msg = ["MDR, T KI ?"]
             await utils.send_msg(msg, ctx)
 
 
@@ -345,42 +351,21 @@ async def clap_emote(ctx):
     await clap(ctx)
 
 
-@client.command()
-async def fillon(ctx):
-    transacs = bank.get_history(ADMIN[0])
-    if transacs is None:
-        res = ["Erreur : Pas de compte en banque."]
-    else:
-        res = []
-        res.append("Historique du ministre des finances :")
-        res.append("")
-        for t in transacs:
-            amount = ("{}" + str(t[2]/100)).rjust(10)
-            if t[0] == ADMIN[0]:
-                username = await get_name(t[1])
-                res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('-'), t[3]))
-            elif t[1] == ADMIN[0]:
-                username = await get_name(t[0])
-                res.append("`{}\t|{}|{}ŧ | '{}'`".format(t[4], username.center(20), amount.format('+'), t[3]))
-    log_info('\n'.join(res))
-    await utils.send_msg(res, ctx)
-
-
-@client.command()
-async def say(ctx, msg, channel: discord.TextChannel = None):
-    inventory = marketplace.get_inventory(ctx.author.id)
-    found = False
-    for creator_id, name, _, _, _ in inventory:
-        if creator_id == TIGRISBOT_CREATOR and name == "Télécommande du TigrisBot":
-            found = True
-            break
-    if not found:
-        await ctx.send("Erreur : Vous n'avez pas la Télécommande du TigrisBot")
-        return
-    if channel is None:
-        await ctx.send(msg)
-    else:
-        await channel.send(msg)
+#@client.command()
+#async def say(ctx, msg, channel: discord.TextChannel = None):
+#    inventory = marketplace.get_inventory(ctx.author.id)
+#    found = False
+#    for creator_id, name, _, _, _ in inventory:
+#        if creator_id == TIGRISBOT_CREATOR and name == "Télécommande du TigrisBot":
+#            found = True
+#            break
+#    if not found:
+#        await ctx.send("Erreur : Vous n'avez pas la Télécommande du TigrisBot")
+#        return
+#    if channel is None:
+#        await ctx.send(msg)
+#    else:
+#        await channel.send(msg)
 
 
 @client.command(name="citizens")
@@ -397,6 +382,7 @@ async def get_citizens(ctx):
         res.append("{} : {}".format(await get_name(citizen[0]), utils.mention(citizen[0])))
     await utils.send_msg(res, dm)
 
+### START OF INVENTORY
 
 @client.command(ignore_extra=False)
 async def buy(ctx, item_id: int):
@@ -633,30 +619,30 @@ async def get_trades_error(ctx, error):
     raise error
 
 
-@client.command(name="create", ignore_extra=False)
-async def create_item(ctx, name, description = ""):
-    description = description[:256]
-    item_id = marketplace.create_item(ctx.author.id, name, description)
-    if not item_id:
-        res = "Erreur : Vous ne pouvez créer qu'un seul objet par jour."
-    else:
-        res = "Vous venez de créer {} (id : {})".format(name, item_id)
-    await ctx.send(res)
-
-
-@create_item.error
-async def create_item_error(ctx, error):
-    log_error(error)
-    if isinstance(error, commands.MissingRequiredArgument):
-        res = "Erreur : Nombre de paramètres insuffisant.\n"
-        res += "`.create <name> [<description>]`"
-        await ctx.send(res)
-    elif isinstance(error, commands.TooManyArguments):
-        res = "Erreur : Trop de paramètres.\n"
-        res += "N'oubliez pas d'entourer votre nom d'objet ou votre description de guillemets (\")"
-        await ctx.send(res)
-    else:
-        raise error
+#@client.command(name="create", ignore_extra=False)
+#async def create_item(ctx, name, description = ""):
+#    description = description[:256]
+#    item_id = marketplace.create_item(ctx.author.id, name, description)
+#    if not item_id:
+#        res = "Erreur : Vous ne pouvez créer qu'un seul objet par jour."
+#    else:
+#        res = "Vous venez de créer {} (id : {})".format(name, item_id)
+#    await ctx.send(res)
+#
+#
+#@create_item.error
+#async def create_item_error(ctx, error):
+#    log_error(error)
+#    if isinstance(error, commands.MissingRequiredArgument):
+#        res = "Erreur : Nombre de paramètres insuffisant.\n"
+#        res += "`.create <name> [<description>]`"
+#        await ctx.send(res)
+#    elif isinstance(error, commands.TooManyArguments):
+#        res = "Erreur : Trop de paramètres.\n"
+#        res += "N'oubliez pas d'entourer votre nom d'objet ou votre description de guillemets (\")"
+#        await ctx.send(res)
+#    else:
+#        raise error
 
 
 @client.command(name="delete")
@@ -726,6 +712,10 @@ async def get_inventory_error(ctx, error):
     raise error
 
 
+### END OF INVENTORY
+
+### START OF BANK
+
 @client.command(ignore_extra=True)
 async def new_account(ctx, user: discord.Member = None):
     """
@@ -733,8 +723,13 @@ async def new_account(ctx, user: discord.Member = None):
     """
     if user is None:
         user_id = ctx.author.id
-    else:
+    elif utils.is_admin(ctx):
         user_id = user.id
+    else:
+        res = "Erreur : vous ne pouvez pas créer un compte pour une autre personne."
+        log_info(res)
+        await ctx.send(res)
+        return
 
     if bank.new_account(user_id):
         res = "<@{}> a maintenant un compte en banque.".format(user_id)
@@ -775,7 +770,7 @@ async def get_balance_error(ctx, error):
 
 
 @client.command(ignore_extra=False)
-async def send(ctx, to_user: discord.Member, amount: float, msg = ''):
+async def send_tigris(ctx, to_user: discord.Member, amount: float, msg = ''):
     from_id = ctx.author.id
 
     amount = int(round(amount, 3)*100)
@@ -798,13 +793,11 @@ async def send(ctx, to_user: discord.Member, amount: float, msg = ''):
     is_tax_free = ctx.guild.id in TAX_FREE_SERVER
 
     # Call DB function
-    status = bank.send(from_id, to_id, amount, msg, tax_free=is_tax_free)
+    status = bank.send(from_id, to_id, amount, msg, tax_free=True)
 
     # Branch on return status
     if status == 0:
         res = "L'opération est enregistrée.\n"
-        if to_id == client.user.id:
-            res += "Fais un voeu."
     elif status == 1:
         res = "Erreur : L'expéditeur n'a pas de compte en banque."
     elif status == 2:
@@ -820,14 +813,14 @@ async def send(ctx, to_user: discord.Member, amount: float, msg = ''):
     await ctx.send(res)
 
 
-@send.error
-async def send_error(ctx, error):
+@send_tigris.error
+async def send_tigris_error(ctx, error):
     log_error(error)
     if isinstance(error, commands.BadArgument):
         await ctx.send(error)
     elif isinstance(error, commands.MissingRequiredArgument):
         res = "Erreur : Nombre de paramètres insuffisant.\n"
-        res += "`.send <to> <amount> [message]`"
+        res += "`.send_tigris <to> <amount> [message]`"
         await ctx.send(res)
     elif isinstance(error, commands.TooManyArguments):
         res = "Erreur : Trop de paramètres.\n"
@@ -872,10 +865,10 @@ async def get_all_balance(ctx):
     all_balance = bank.get_all_balance()
     res = "Comptes en banque :\n\n"
     tot = 0
-    for user_id, balance in all_balance:
+    for user_id, balance, step in all_balance:
         tot += balance
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(balance/100).rjust(10))
+        res += "`{}|{}ŧ| Palier {}`\n".format(username.ljust(30), str(balance/100).rjust(10), step)
 
     res += '`' + '-'*42 + "`\n"
     res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot/100).rjust(10))
@@ -899,31 +892,33 @@ async def get_all_jobs(ctx):
     """
     The jobs of everyone (with salaries).
     """
-    all_jobs = bank.get_all_jobs()
+    all_jobs = jobs_mgr.get_all_jobs()
     res = "Métiers :\n\n"
-    jobs = []
+    res = []
     curr_uid = 0
     for user_id, job_id, title, salary in all_jobs:
         if user_id != curr_uid:
             if curr_uid != 0:
                 curr_job += "```"
-                jobs.append(curr_job)
+                res.append(curr_job)
             curr_job = ""
             curr_uid = user_id
             curr_job += "Le ou les métiers de **{}** :\n".format(await get_name(curr_uid))
             curr_job += "```markdown\n"
         curr_job += "* {}".format(title.center(70))
-        if await utils.is_admin(ctx):
-            curr_job += "| {}ŧ | {}".format(str(salary/100).rjust(10), job_id)
         curr_job += '\n'
 
     if len(all_jobs) > 0:
         curr_job += "```"
-        jobs.append(curr_job)
+        res.append(curr_job)
+        log_info(res)
+        dm = await ctx.author.create_dm()
+        await utils.send_msg(res, dm)
+    else:
+        log_info("(get_all_jobs) No jobs found.")
+        res = ["Personne n'a de métier ici..."]
+        await utils.send_msg(res, ctx)
 
-    log_info(jobs)
-    dm = await ctx.author.create_dm()
-    await utils.send_msg(jobs, dm)
 
 
 @get_all_jobs.error
@@ -932,25 +927,21 @@ async def get_all_jobs_error(ctx, error):
     raise error
 
 
-@client.command(name="all_salaries")
+@client.command(name="all_steps")
 @commands.check(utils.is_admin)
-async def get_all_salaries(ctx):
-    all_salaries = bank.get_all_salaries()
-    res = "Salaires des citoyens :\n\n"
-    tot = 0
-    for user_id, salary in all_salaries:
-        tot += salary
+async def get_all_steps(ctx):
+    steps = bank.get_all_steps()
+    res = "Palier des citoyens :\n\n"
+    for user_id, step in steps:
         username = await get_name(user_id)
-        res += "`{}|{}ŧ`\n".format(username.ljust(30), str(salary/100).rjust(10))
+        res += "`{}|{}`\n".format(username.ljust(30), str(step).rjust(10))
 
-    res += '`' + '-'*42 + "`\n"
-    res += "`{}|{}ŧ`\n".format("Total".ljust(30), str(tot/100).rjust(10))
     dm = await ctx.author.create_dm()
     await utils.send_msg(res.split('\n'), dm)
 
 
-@get_all_salaries.error
-async def get_all_salaries_error(ctx, error):
+@get_all_steps.error
+async def get_all_steps_error(ctx, error):
     log_error(error)
     if isinstance(error, commands.CheckFailure):
         res = "Erreur : vous n'avez pas le droit de faire ceci."
@@ -961,17 +952,15 @@ async def get_all_salaries_error(ctx, error):
 
 @client.command(ignore_extra=False)
 @commands.check(utils.is_admin)
-async def new_job(ctx, user: discord.Member, salary: float, title):
+async def new_job(ctx, user: discord.Member, step: int, title):
     """
     Add a new job with:
 
-    .new_job <user_id> <salary> <title>
+    .new_job <user_id> <step> <title>
     """
-    salary = int(round(salary, 3)*100)
-
     title = title[:256]
 
-    bank.new_job(user.id, salary, title)
+    jobs_mgr.new_job(user.id, step, title)
     res = "Nouveau métier pour {} enregistré !".format(user.mention)
     log_info(res)
     await ctx.send(res)
@@ -1008,7 +997,7 @@ async def del_job(ctx, user: discord.Member, job_id: int):
     """
     user_id = user.id
 
-    job = bank.remove_job(user_id, job_id)
+    job = jobs_mgr.remove_job(user_id, job_id)
     if job is None:
         res = "Erreur : Le métier pour le.a citoyen.ne ({}) ayant pour identifiant {} n'existe pas".format(utils.mention(user_id), job_id)
         log_error(res)
@@ -1040,14 +1029,14 @@ async def get_jobs(ctx, user: discord.Member = None):
     else:
         user_id = user.id
 
-    jobs = bank.get_jobs(user_id)
+    usr_jobs = jobs_mgr.get_jobs(user_id)
 
     res = "Le ou les métiers de **{}** :\n".format(await get_name(user_id))
     res += "```\n"
-    for _, job_id, title, salary in jobs:
+    for _, job_id, title in usr_jobs:
         res += "* {}".format(title.center(70))
         if user is None or await utils.is_admin(ctx):
-            res += "| {}ŧ | {}".format(str(salary/100).rjust(10), job_id)
+            res += "| {}".format(job_id)
         res += '\n'
     res += "```"
 
@@ -1068,8 +1057,23 @@ async def get_jobs_error(ctx, error):
         raise error
 
 
-@client.command(name="salary")
-async def get_salary(ctx, user: discord.Member = None):
+@client.command(name="set_step")
+@commands.check(utils.is_admin)
+async def set_step(ctx, user: discord.Member, step: int):
+    user_id = user.id
+
+    res = []
+    if bank.set_income_step(user_id, step) == -1:
+        res.append("{} n'a pas de compte en banque.".format(await get_name(user_id)))
+    else:
+        res.append("Le palier de {} a été modifié".format(await get_name(user_id)))
+    
+    await utils.send_msg(res, ctx)
+
+
+
+@client.command(name="step")
+async def get_step(ctx, user: discord.Member = None):
     if user is None:
         user_id = ctx.author.id
     else:
@@ -1077,38 +1081,38 @@ async def get_salary(ctx, user: discord.Member = None):
             return
         user_id = user.id
 
-    salary = bank.get_salary(user_id)
+    step = bank.get_income_step(user_id)
     if user is not None:
         dm = await ctx.author.create_dm()
 
-        if salary is None:
-            res = "Erreur : {} n'a aucun de métier.".format(utils.mention(user_id))
+        if step is None:
+            res = "Erreur : {} n'a pas de compte en banque.".format(utils.mention(user_id))
             log_error(res)
         else:
-            res = "{} a un salaire mensuel de {} pour l'ensemble de ses métiers.".format(utils.mention(user_id), salary/100)
+            res = "{} est au palier {} et a donc un revenu de {}ŧ.".format(utils.mention(user_id), step, INCOME_BASE + step * INCOME_STEP_VALUE)
             log_info(res)
 
         await dm.send(res)
     else:
-        if salary is None:
-            res = "Erreur : vous n'avez pas de métier."
+        if step is None:
+            res = "Erreur : vous n'avez pas de compte en banque. Pour le créer : `.new_account`"
             log_error(res)
         else:
-            res = "Vous avez un salaire mensuel de {}ŧ pour l'ensemble de vos métiers.".format(salary/100)
+            res = "Vous êtes au palier {} et avez donc un revenu de {}ŧ .".format(step, INCOME_BASE + step*INCOME_STEP_VALUE)
             log_info(res)
 
         await ctx.send(res)
 
 
-@get_salary.error
-async def get_salary_error(ctx, error):
+@get_step.error
+async def get_step_error(ctx, error):
     log_error(error)
     if isinstance(error, commands.BadArgument):
         await ctx.send(error)
     elif isinstance(error, commands.TooManyArguments):
         res = "Erreur : Mauvais nombre de paramètres.\n"
-        res += ".salary (classique)\n"
-        res += ".salary [<user>] (privilégié)"
+        res += ".step (classique)\n"
+        res += ".step [<user>] (privilégié)"
         await ctx.send(res)
     else:
         raise error
@@ -1116,42 +1120,20 @@ async def get_salary_error(ctx, error):
 
 @client.command()
 @commands.check(utils.is_admin)
-async def pay_salaries(ctx):
+async def payroll(ctx):
     from_id = ctx.author.id
-    ret_values = bank.pay_all_salaries(from_id)
+    ret_values = bank.payroll()
 
     res = []
-    paid = []
-    error = []
-    for user_id, v, salary in ret_values:
-        if v == 1:
-            error.append("Erreur : Le compte débiteur ({}) n'existe pas.".format(utils.mention(from_id)))
-            log_error(res[-1])
-            break
+    for user_id in ret_values:
+        res.append("Le revenu de {}ŧ a été crédité sur son compte.".format(await get_name(user_id)))
+        log_info(res[-1])
 
-        if v == 0:
-            res.append("Son salaire a été versé à {}.\n".format(await get_name(user_id)))
-            paid.append((user_id, salary))
-            log_info(res[-1])
-        elif v == 2:
-            error.append("Erreur : La salaire de {} est nul.".format(await get_name(user_id)))
-            log_error(res[-1])
-        elif v == 3:
-            error.append("Erreur : Le débiteur ({}) n'a plus les fonds nécéssaires.".format(utils.mention(from_id)))
-            res.append(error[-1][1])
-            log_error(res[-1])
-            break
-
-    for user_id, amount in paid:
-        user = await client.fetch_user(user_id)
-        dm = await user.create_dm()
-        await dm.send("Vous avez reçu votre salaire de {}ŧ.".format(amount/100))
-
-    await utils.send_msg(error + res, ctx)
+    await utils.send_msg(res, ctx)
 
 
-@pay_salaries.error
-async def pay_salaries_error(ctx, error):
+@payroll.error
+async def payroll_error(ctx, error):
     log_error(error)
     if isinstance(error, commands.CheckFailure):
         res = "Erreur : vous n'avez pas le droit de faire ceci."
@@ -1160,42 +1142,42 @@ async def pay_salaries_error(ctx, error):
         raise error
 
 
-@client.command(name="monthly_taxes")
-async def get_monthly_taxes(ctx, month = None):
-    if month is not None:
-        pattern_month = re.compile("(\d\d\d\d-\d\d)")
-        match = pattern_month.match(msg[1])
-        if match is None:
-            res = "Erreur : Mauvais format pour le mois demandé ({})".format(msg[1])
-            log_error(res)
-            await ctx.send(res)
-            return
-
-        month = match.group(1)
-        sum_tax = bank.get_monthly_taxes(month)
-        if sum_tax is None:
-            res = "Aucune taxe n'a été récoltée ce mois-ci."
-            log_error(res)
-            return res
-        res = "Somme des taxes récoltées pour le mois {} : {}ŧ".format(month, sum_tax/100)
-    else:
-        sum_tax = bank.get_monthly_taxes()
-        if sum_tax is None:
-            res = "Aucune taxe n'a été récoltée ce mois-ci."
-            log_error(res)
-            return res
-        res = "Somme des taxes récoltées pour ce mois-ci : {}ŧ".format(sum_tax/100)
-
-
-
-    log_info(res)
-    await ctx.send(res)
-
-
-@get_monthly_taxes.error
-async def get_monthly_taxes_error(ctx, error):
-    log_error(error)
-    raise error
+#@client.command(name="monthly_taxes")
+#async def get_monthly_taxes(ctx, month = None):
+#    if month is not None:
+#        pattern_month = re.compile("(\d\d\d\d-\d\d)")
+#        match = pattern_month.match(msg[1])
+#        if match is None:
+#            res = "Erreur : Mauvais format pour le mois demandé ({})".format(msg[1])
+#            log_error(res)
+#            await ctx.send(res)
+#            return
+#
+#        month = match.group(1)
+#        sum_tax = bank.get_monthly_taxes(month)
+#        if sum_tax is None:
+#            res = "Aucune taxe n'a été récoltée ce mois-ci."
+#            log_error(res)
+#            return res
+#        res = "Somme des taxes récoltées pour le mois {} : {}ŧ".format(month, sum_tax/100)
+#    else:
+#        sum_tax = bank.get_monthly_taxes()
+#        if sum_tax is None:
+#            res = "Aucune taxe n'a été récoltée ce mois-ci."
+#            log_error(res)
+#            return res
+#        res = "Somme des taxes récoltées pour ce mois-ci : {}ŧ".format(sum_tax/100)
+#
+#
+#
+#    log_info(res)
+#    await ctx.send(res)
+#
+#
+#@get_monthly_taxes.error
+#async def get_monthly_taxes_error(ctx, error):
+#    log_error(error)
+#    raise error
 
 
 async def get_name(user_id):

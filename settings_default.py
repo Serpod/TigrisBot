@@ -1,6 +1,7 @@
 BOT_TOKEN = ""  # Token of the bot given by the Discord Developer Portal (must be changed)
 
 DB_NAME_TIGRIS = "./tigris.db"  # Name of the file containing the SQLite main database
+DB_NAME_JOBS = "./jobs.db"
 BALANCE_TABLE = "balance"   # Name of the table containing the balances
 TRANSACTION_TABLE = "transac"   # Name of the table containing the transactions
 JOB_TABLE = "job"   # Name of the table containing the job details
@@ -14,11 +15,6 @@ TIGRISBOT_CREATOR = 0   # Creator of the tigrisbot
 INIT_MONEY = 100000000  # Amount of tigris for the first user
 
 DEBUG = True
-
-TAX_RATE = 0.1  # Percentage of taxes on each transaction.
-TAX_TARGET = ADMIN[0]
-TAX_FREE_USERS = ADMIN  # Users exempted from tax
-TAX_FREE_SERVER = []    # Servers exempted from tax
 
 # INVENTORY
 DB_NAME_MARKETPLACE = "./marketplace.db"    # Name of the file containing the SQLite marketplace database
@@ -40,3 +36,8 @@ BOUFFON_ROLES_ID = 0    # Role ID of the bouffon (must be changed)
 NINI_SAVE_FILE_PREFIX = "./nini_history_"   # Name of the prefix for files containing nini results
 LOSER_ROLE_NAME = ""   # Name of the role to be applied to the NiNi loser(s)
 NUMBER_OF_LOSER = 2   # Number of people to receive the loser role
+
+# BASIC INCOME
+
+INCOME_BASE = 1500
+INCOME_STEP_VALUE = 250
