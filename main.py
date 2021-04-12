@@ -190,7 +190,8 @@ async def scoreboard(ctx, histfile=None, preamble=None):
     message_count = 0
     if os.path.isfile(filename):
         log_info("nini history file found")
-        history = pickle.load(open(filename, "rb"))
+        with open(filename, "rb") as f:
+            history = pickle.load(f)
         date = history[0]
         all_losers = history[1]
     else:
@@ -202,70 +203,77 @@ async def scoreboard(ctx, histfile=None, preamble=None):
 
     async for m in message.channel.history(limit=None, after=date, oldest_first=True):
         message_count += 1
-        auth = m.author.name
-        if auth not in all_losers:
-            all_losers[auth] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "id": m.author.id}
-        if "id" not in all_losers[auth]:
-            all_losers[auth]["id"] = m.author.id            # NEED ID TO SET LOSER OF THE WEEK SO WE ADD TO ALREADY EXISTING MEMBERS (RETRO COMPATIBILITY)
-        all_losers[auth]["messages"] += 1
+        auth_id = m.author.id
+        if auth_id not in all_losers:
+            all_losers[auth_id] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "username": m.author.display_name}
+        all_losers[auth_id]["messages"] += 1
+        all_losers[auth_id]["username"] = m.author.display_name
 
         react_lose = False
         losers = set()
         for reaction in m.reactions:
             if reaction.emoji == '🚨':
                 if not react_lose:
-                    losers.add((auth, m.author.id))
+                    losers.add((m.author.display_name, auth_id))
                 await m.add_reaction('🚨')
             if reaction.emoji in ['👌', '🙉', '🙊', '🙈', '🚳', '🚷', '⛔', '🚭', '📵', '🚯', '🔕', '🆗', '🙆', '🙅', '😶'] :
-                react_lose = True
-                losers = set([(l.name, l.id) for l in await reaction.users().flatten()])
+                if not react_lose:
+                    losers = set()
+                    react_lose = True
+
+                for l in await reaction.users().flatten():
+                    losers.add((l.display_name, l.id))
                 await m.add_reaction('🚨')
 
-        for l, id in losers:
-            if l not in all_losers:
-                all_losers[l] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "id": id}
-            all_losers[l]["errors"] += 1
-            all_losers[l]["streak"] = -1                    # SO THE ERROR MESSAGE DOES NOT COUNT THEIR STREAK ANYMORE
+        for l, l_id in losers:
+            if l_id not in all_losers:
+                all_losers[l_id] = {"messages": 0, "errors": 0, "streak": 0, "streak_max": 0, "username": l}
+            all_losers[l_id]["errors"] += 1
+            all_losers[l_id]["streak"] = -1                    # SO THE ERROR MESSAGE DOES NOT COUNT THEIR STREAK ANYMORE
 
-        all_losers[auth]["streak"] += 1
-        all_losers[auth]["streak_max"] = max(all_losers[auth]["streak_max"], all_losers[auth]["streak"])
+        all_losers[auth_id]["streak"] += 1
+        all_losers[auth_id]["streak_max"] = max(all_losers[auth_id]["streak_max"], all_losers[auth_id]["streak"])
 
     # SAVE DATA AS PICKLE
 
     date = m.created_at
-    pickle.dump([date, all_losers], open(filename, "wb"))
+    with open(filename, "wb") as f:
+        pickle.dump([date, all_losers], f)
 
     # WEEKLY RANKING UPDATE AND LOSERS OF THE WEEK
 
     # LOSERS OF THE WEEK COMPUTE (BEFORE SORTING DICT)
     loss = {}
 
-    for name in all_losers:
-        if name not in old_losers:
-            loss[name] = all_losers[name]["errors"]
+    for uid in all_losers:
+        if uid not in old_losers:
+            loss[uid] = (all_losers[uid]["errors"], all_losers[uid]["username"])
         else:
-            nLoss = all_losers[name]["errors"] - old_losers[name]["errors"]
+            nLoss = all_losers[uid]["errors"] - old_losers[uid]["errors"]
             if nLoss > 0:
-                loss[name] = nLoss
+                loss[uid] = (nLoss, all_losers[uid]["username"])
 
-    loss_ranking = sorted([(name, nLoss) for name, nLoss in loss.items() if nLoss > 0], key=lambda x: x[1], reverse=True)
+    loss_ranking = sorted([(uid, loss[uid][1], loss[uid][0]) for uid in loss if loss[uid][0] > 0], key=lambda x: x[2], reverse=True)
+
+    max_ratio_old = max([data["messages"]/data["errors"] if data["errors"] != 0 else -1 for _, data in old_losers.items() if (data["messages"] >= 300)])
+    max_ratio = max([data["messages"]/data["errors"] if data["errors"] != 0 else -1 for _, data in all_losers.items() if (data["messages"] >= 300)])
 
     # RANKING UPDATE
-    old_losers = sorted([(name, data) for name, data in old_losers.items() if (data["messages"] >= 300)],
-                        key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else float("inf"), reverse=True)
+    old_losers = sorted([(uid, data) for uid, data in old_losers.items() if (data["messages"] >= 300)],
+                        key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else max_ratio+x[1]["messages"], reverse=True)
 
     old_ranking = {}
-    for rank, (name, data) in enumerate(old_losers):
-        old_ranking[name] = rank
+    for rank, (uid, data) in enumerate(old_losers):
+        old_ranking[uid] = rank
 
-    all_losers_sorted = sorted([(name, data) for name, data in all_losers.items() if (data["messages"] >= 300)],
-                                key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else float("inf"), reverse=True)
+    all_losers_sorted = sorted([(uid, data) for uid, data in all_losers.items() if (data["messages"] >= 300)],
+                                key=lambda x: x[1]["messages"]/x[1]["errors"] if x[1]["errors"] != 0 else max_ratio+x[1]["messages"], reverse=True)
 
-    for new_rank, (name, data) in enumerate(all_losers_sorted):
-        if name not in old_ranking:
+    for new_rank, (uid, data) in enumerate(all_losers_sorted):
+        if uid not in old_ranking:
             old_rank = len(old_ranking)
         else:
-            old_rank = old_ranking[name]
+            old_rank = old_ranking[uid]
         update = old_rank-new_rank
         if update > 0:
             update = "🔼"+str(update)
@@ -277,11 +285,11 @@ async def scoreboard(ctx, histfile=None, preamble=None):
 
     # RANKING MESSAGE
     res = ["Classement du <:nini:696420822855843910>"]
-    res.append("`{} | {} | {} | {} | {} | {} | {}`".format("Pseudo".center(20), "# messages".center(12), "# défaites".center(12),
+    res.append("`{} | {} | {} | {} | {} | {} | {}`".format("Pseudo".center(40), "# messages".center(12), "# défaites".center(12),
                                                       "Ratio".center(7), "Streak".center(12), "Streak max".center(12), "Évolution".center(12)))
 
-    for username, data in all_losers_sorted:
-        res.append("`{} | {} | {} | {} | {} | {} | {}`".format(username.center(20), str(data["messages"]).center(12), str(data["errors"]).center(12),
+    for uid, data in all_losers_sorted:
+        res.append("`{} | {} | {} | {} | {} | {} | {}`".format(data["username"].center(40), str(data["messages"]).center(12), str(data["errors"]).center(12),
                                                           str(int(data["messages"]/data["errors"]) if data["errors"] != 0 else "∞").center(7), str(data["streak"]).center(12), str(data["streak_max"]).center(12), data["rank_update"].center(12)))
 
     log_info('\n'.join(res))
@@ -300,7 +308,7 @@ async def scoreboard(ctx, histfile=None, preamble=None):
         loseMsg = "Les {} grand.e.s loooooser.euse.s de cette semaine sont ".format(nLoser)
 
     for n, l in enumerate(loss_ranking):
-        loseMsg += l[0] + " ({})".format(l[1])
+        loseMsg += l[1] + " ({})".format(l[2])
         if n < nLoser-2:
             loseMsg += ", "
         elif n < nLoser-1:
@@ -317,14 +325,13 @@ async def scoreboard(ctx, histfile=None, preamble=None):
         if role in member.roles:
             await member.remove_roles(role)
 
-    for name, r in loss_ranking:
-        if name in all_losers and "id" in all_losers[name]:
-            try:
-                member = ctx.guild.get_member(all_losers[name]["id"])
-                await member.add_roles(role)
-                log_info("Loser role added to {}.".format(name))
-            except:
-                continue
+    for uid, name, _ in loss_ranking:
+        try:
+            member = ctx.guild.get_member(uid)
+            await member.add_roles(role)
+            log_info("Loser role added to {}.".format(name))
+        except:
+            continue
 
     # SEND MESSAGE
     res.append("J'ai lu {} messages !".format(message_count))
