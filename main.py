@@ -429,6 +429,23 @@ async def decomposeEmote(ctx, number=None, *, left):
         await decomposeHelp(ctx)
 
 
+#@client.command()
+#async def say(ctx, msg, channel: discord.TextChannel = None):
+#    inventory = marketplace.get_inventory(ctx.author.id)
+#    found = False
+#    for creator_id, name, _, _, _ in inventory:
+#        if creator_id == TIGRISBOT_CREATOR and name == "Télécommande du TigrisBot":
+#            found = True
+#            break
+#    if not found:
+#        await ctx.send("Erreur : Vous n'avez pas la Télécommande du TigrisBot")
+#        return
+#    if channel is None:
+#        await ctx.send(msg)
+#    else:
+#        await channel.send(msg)
+
+
 @client.command(name="citizens")
 async def get_citizens(ctx):
     dm = await ctx.author.create_dm()
