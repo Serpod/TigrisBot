@@ -11,6 +11,7 @@ import utils
 import re
 import marketplace
 import pickle
+import comptage
 from log import *
 from settings import *
 
@@ -358,21 +359,74 @@ async def clap_emote(ctx):
     await clap(ctx)
 
 
-#@client.command()
-#async def say(ctx, msg, channel: discord.TextChannel = None):
-#    inventory = marketplace.get_inventory(ctx.author.id)
-#    found = False
-#    for creator_id, name, _, _, _ in inventory:
-#        if creator_id == TIGRISBOT_CREATOR and name == "Télécommande du TigrisBot":
-#            found = True
-#            break
-#    if not found:
-#        await ctx.send("Erreur : Vous n'avez pas la Télécommande du TigrisBot")
-#        return
-#    if channel is None:
-#        await ctx.send(msg)
-#    else:
-#        await channel.send(msg)
+async def decomposeHelp(ctx):
+    msg = "Utilise la commande suivie d'un nombre.\n Tu peux y ajouter un message complémentaire si tu veux."
+    await utils.send_msg(msg, ctx)
+
+
+@client.command(name='decomposeOpt')
+async def decomposeOpt(ctx, number=None, *, left=None):
+    if number is not None and number.isdigit() and int(number) > 0:
+        try:
+            v, res = min(comptage.generate(int(number)), key=lambda x: len(x[1]))
+            msg = res + ("" if left is None else " "+left)
+            await utils.send_msg(msg, ctx)
+        except ValueError:
+            await utils.send_msg("No solution found", ctx)
+    else:
+        await decomposeHelp(ctx)
+
+
+@client.command(name='decomposeCplx')
+async def decomposeCplx(ctx, number=None, *, left=None):
+    if number is not None and number.isdigit() and int(number) > 9:
+        try:
+            v, res = min(comptage.generate(int(number)), key=lambda x: -len(x[1]))
+            msg = res + ("" if left is None else " "+left)
+            await utils.send_msg(msg, ctx)
+        except ValueError:
+            await utils.send_msg("No solution found", ctx)
+    else:
+        await decomposeHelp(ctx)
+
+
+@client.command(name='decomposeMin')
+async def decomposeOpt(ctx, number=None, *, left=None):
+    if number is not None and number.isdigit() and int(number) > 9:
+        try:
+            v, res = min(comptage.generate(int(number)), key=lambda x: x[0])
+            msg = res + ("" if left is None else " "+left)
+            await utils.send_msg(msg, ctx)
+        except ValueError:
+            await utils.send_msg("No solution found", ctx)
+    else:
+        await decomposeHelp(ctx)
+
+
+@client.command(name='decomposeMax')
+async def decomposeOpt(ctx, number=None, *, left=None):
+    if number is not None and number.isdigit() and int(number) > 9:
+        try:
+            v, res = min(comptage.generate(int(number)), key=lambda x: -x[0])
+            msg = res + ("" if left is None else " "+left)
+            await utils.send_msg(msg, ctx)
+        except ValueError:
+            await utils.send_msg("No solution found", ctx)
+    else:
+        await decomposeHelp(ctx)
+
+
+@client.command(name='🔢')
+async def decomposeEmote(ctx, number=None, *, left):
+    if number is not None and number.isdigit() and int(number) > 9:
+        try:
+            v, res = min(comptage.generate(int(number)), key=lambda x: len(x[1]))
+            msg = res + ("" if left is None else " "+left)
+            await utils.send_msg(msg, ctx)
+        except ValueError:
+            await utils.send_msg("No solution found", ctx)
+    else:
+        await decomposeHelp(ctx)
 
 
 @client.command(name="citizens")
