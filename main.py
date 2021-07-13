@@ -366,7 +366,7 @@ async def decomposeHelp(ctx):
 
 @client.command(name='decomposeOpt')
 async def decomposeOpt(ctx, number=None, *, left=None):
-    if number is not None and number.isdigit() and int(number) > 0:
+    if number is not None and number.isdigit() and 10000 > int(number) > 0:
         try:
             v, res = min(comptage.generate(int(number)), key=lambda x: len(x[1]))
             msg = res + ("" if left is None else " "+left)
@@ -379,7 +379,7 @@ async def decomposeOpt(ctx, number=None, *, left=None):
 
 @client.command(name='decomposeCplx')
 async def decomposeCplx(ctx, number=None, *, left=None):
-    if number is not None and number.isdigit() and int(number) > 9:
+    if number is not None and number.isdigit() and 10000 > int(number) > 9:
         try:
             v, res = min(comptage.generate(int(number)), key=lambda x: -len(x[1]))
             msg = res + ("" if left is None else " "+left)
@@ -392,7 +392,7 @@ async def decomposeCplx(ctx, number=None, *, left=None):
 
 @client.command(name='decomposeMin')
 async def decomposeOpt(ctx, number=None, *, left=None):
-    if number is not None and number.isdigit() and int(number) > 9:
+    if number is not None and number.isdigit() and 10000 > int(number) > 9:
         try:
             v, res = min(comptage.generate(int(number)), key=lambda x: x[0])
             msg = res + ("" if left is None else " "+left)
@@ -405,7 +405,7 @@ async def decomposeOpt(ctx, number=None, *, left=None):
 
 @client.command(name='decomposeMax')
 async def decomposeOpt(ctx, number=None, *, left=None):
-    if number is not None and number.isdigit() and int(number) > 9:
+    if number is not None and number.isdigit() and 10000 > int(number) > 9:
         try:
             v, res = min(comptage.generate(int(number)), key=lambda x: -x[0])
             msg = res + ("" if left is None else " "+left)
@@ -418,7 +418,7 @@ async def decomposeOpt(ctx, number=None, *, left=None):
 
 @client.command(name='🔢')
 async def decomposeEmote(ctx, number=None, *, left):
-    if number is not None and number.isdigit() and int(number) > 9:
+    if number is not None and number.isdigit() and 10000 > int(number) > 9:
         try:
             v, res = min(comptage.generate(int(number)), key=lambda x: len(x[1]))
             msg = res + ("" if left is None else " "+left)
