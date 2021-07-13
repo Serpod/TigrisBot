@@ -360,7 +360,7 @@ async def clap_emote(ctx):
 
 
 async def decomposeHelp(ctx):
-    msg = "Utilise la commande suivie d'un nombre.\n Tu peux y ajouter un message complémentaire si tu veux."
+    msg = "Utilise la commande suivie d'un nombre entre 9 et 10000.\n Tu peux y ajouter un message complémentaire si tu veux."
     await utils.send_msg(msg, ctx)
 
 
